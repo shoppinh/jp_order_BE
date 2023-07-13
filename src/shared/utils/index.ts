@@ -25,15 +25,17 @@ export function isEmptyObjectOrArray(objects: any) {
   return isEmptyObject(objects);
 }
 export const isValidEmail = (email: string) => {
-  return /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(email);
+  return /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(
+    email,
+  );
 };
 export const isPhoneNumberValidation = (number: string) => {
   try {
-    if (number[0] === '0') {
+    if (number.startsWith('0')) {
       number = number.replace('0', process.env.PHONE_COUNTRY_CODE_DEFAULT);
     }
 
-    if (number[0] !== '+') {
+    if (!number.startsWith('+')) {
       number = `+${number}`;
     }
 
@@ -56,18 +58,26 @@ export const standardPhoneNumber = (number: string) => {
     return number;
   }
 
-  if (number[0] === '0') {
+  if (number.startsWith('0')) {
     number = number.replace('0', process.env.PHONE_COUNTRY_CODE_DEFAULT);
   }
 
-  if (number[0] !== '+') {
+  if (!number.startsWith('+')) {
     number = `+${number}`;
   }
   return number;
 };
-export const validateFields = async (fields: any, message: string, i18n: I18nContext) => {
+export const validateFields = async (
+  fields: any,
+  message: string,
+  i18n: I18nContext,
+) => {
   for (const field in fields) {
-    if (!fields[field] || ((_.isArray(fields[field]) || _.isObject(fields[field])) && isEmptyObjectOrArray(fields[field]))) {
+    if (
+      !fields[field] ||
+      ((_.isArray(fields[field]) || _.isObject(fields[field])) &&
+        isEmptyObjectOrArray(fields[field]))
+    ) {
       throw new HttpException(
         await i18n.translate(message, {
           args: { fieldName: field },

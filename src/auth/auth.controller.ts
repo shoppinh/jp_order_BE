@@ -1,4 +1,161 @@
-import { Controller } from '@nestjs/common';
-
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Param,
+  Post,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
+import {
+  ApiCreatedResponse,
+  ApiBadRequestResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
+import { I18n, I18nContext } from 'nestjs-i18n';
+import { GetUser } from 'src/shared/decorator/current-user.decorator';
+import { ApiException } from 'src/shared/type/api-exception.model';
+import { User } from 'src/user/schema/user.schema';
+import { CreateUserDeviceDto } from './dto/create-user-device.dto';
+import { LoginResponseDto } from './dto/login-response.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { UsernameLoginDto } from './dto/username-login.dto';
+import { JwtGuard } from './guard/jwt-auth.guard';
+import { JwtPayloadInterface } from './model/jwt.interface';
+import { ApiResponse } from 'src/shared/response/api.response';
+import { AuthService } from './auth.service';
+import { UserDeviceService } from 'src/user/service/user-device.service';
+import { UserService } from 'src/user/service/user.service';
+import { AddUserDto } from 'src/user/dto/add-user.dto';
 @Controller('auth')
-export class AuthController {}
+export class AuthController {
+  constructor(
+    private readonly _authService: AuthService,
+    private readonly _userDeviceService: UserDeviceService,
+    private readonly _userService: UserService,
+  ) {}
+  @Post('login')
+  @ApiCreatedResponse({ type: LoginResponseDto })
+  @ApiBadRequestResponse({ type: ApiException })
+  async login(
+    @Body() loginDto: UsernameLoginDto,
+    @I18n() i18n: I18nContext,
+  ): Promise<LoginResponseDto | any> {
+    return new ApiResponse(await this._authService.login(loginDto, i18n));
+  }
+
+  @Post('generate-token')
+  @ApiCreatedResponse({ type: LoginResponseDto })
+  @ApiBadRequestResponse({ type: ApiException })
+  async generateToken(
+    @Body() payload: JwtPayloadInterface,
+    @I18n() i18n: I18nContext,
+  ): Promise<LoginResponseDto | any> {
+    return new ApiResponse(
+      this._authService.jwtEncrypt(payload, {
+        expiredIn: process.env.EXPIRED_TIME_REMEMBER_LOGGED_IN,
+        secretKey: process.env.JWT_PRIVATE_KEY,
+      }),
+    );
+  }
+
+  @Post('refresh-token')
+  @ApiCreatedResponse({ type: LoginResponseDto })
+  @ApiBadRequestResponse({ type: ApiException })
+  async refreshToken(
+    @Body() refreshTokenDto: RefreshTokenDto,
+    @I18n() i18n: I18nContext,
+  ): Promise<LoginResponseDto | any> {
+    return new ApiResponse(
+      await this._authService.refreshToken(refreshTokenDto, i18n),
+    );
+  }
+
+  @Post('device-token')
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard)
+  @ApiBadRequestResponse({ type: ApiException })
+  async saveDeviceToken(@Body() createUserDevice: CreateUserDeviceDto) {
+    const { userId, fcmToken } = createUserDevice;
+    const existedUser = await this._userService.findById(userId);
+    if (!existedUser) {
+      throw new BadRequestException('USER_NOT_FOUND');
+    }
+    const existedDeviceToken = await this._userDeviceService.findOne({
+      fcmToken: fcmToken,
+    });
+    let result;
+    if (existedDeviceToken) {
+      existedDeviceToken.user = existedUser;
+      result = await this._userDeviceService.update(existedDeviceToken._id, {
+        user: existedUser._id,
+      });
+    } else {
+      result = await this._userDeviceService.create({
+        fcmToken: fcmToken,
+        user: existedUser,
+      });
+    }
+    return new ApiResponse(result);
+  }
+
+  @Delete('device-token/:fcmToken')
+  @ApiBadRequestResponse({ type: ApiException })
+  async deleteDeviceToken(@Param('fcmToken') fcmToken: string) {
+    const existedDeviceToken = await this._userDeviceService.findOne({
+      fcmToken: fcmToken,
+    });
+    if (existedDeviceToken) {
+      await this._userDeviceService.delete(existedDeviceToken._id);
+    }
+    return new ApiResponse({
+      deleted: true,
+    });
+  }
+
+  @Post('logout')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
+  @ApiBadRequestResponse({ type: ApiException })
+  async logout(
+    @GetUser() currentUser: User,
+    @I18n() i18n: I18nContext,
+    @Request() req,
+  ) {
+    try {
+      const fcmToken = req.body?.fcmToken;
+      if (currentUser && fcmToken) {
+        try {
+          const existedUserDevice = await this._userDeviceService.findOne({
+            fcmToken,
+            _id: currentUser._id,
+          });
+          if (existedUserDevice) {
+            await this._userDeviceService.delete(existedUserDevice._id);
+          }
+        } catch (e) {
+          console.log(e);
+        }
+      }
+      const tokenAuthUser = req.headers.authorization?.split(' ')[1];
+      await this._authService.logOut(tokenAuthUser);
+
+      return new ApiResponse(await i18n.translate(`user.logout_success`));
+    } catch (error) {
+      console.log('error', error);
+      throw new BadRequestException(error);
+    }
+  }
+
+  @Post('register')
+  @ApiBadRequestResponse({ type: ApiException })
+  async register(
+    @Body() registerUserDto: AddUserDto,
+    @I18n() i18n: I18nContext,
+  ) {
+    return new ApiResponse(
+      await this._authService.register(registerUserDto, i18n),
+    );
+  }
+}

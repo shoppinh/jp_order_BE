@@ -10,6 +10,13 @@ import { AuthModule } from './auth/auth.module';
 import { AppInterceptor } from './shared/interceptor/app.interceptor';
 import { HttpExceptionFilter } from './shared/response/http-exception.filter';
 import { UserModule } from './user/user.module';
+import { AdminModule } from './admin/admin.module';
+import { CategoryModule } from './category/category.module';
+import { ProductModule } from './product/product.module';
+import { OrderModule } from './order/order.module';
+import { TransactionModule } from './transaction/transaction.module';
+import { SettingModule } from './setting/setting.module';
+import { AuditModule } from './audit/audit.module';
 @Module({
   imports: [
     ConfigModule.forRoot(),
@@ -31,6 +38,13 @@ import { UserModule } from './user/user.module';
     }),
     AuthModule,
     UserModule,
+    AdminModule,
+    CategoryModule,
+    ProductModule,
+    OrderModule,
+    TransactionModule,
+    SettingModule,
+    AuditModule,
   ],
   controllers: [AppController],
   providers: [

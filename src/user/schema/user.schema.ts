@@ -54,8 +54,6 @@ export class User extends BaseSchema {
 
   @Prop({ required: true, default: ConstantRoles.ACCOUNTANT })
   role: string;
-  // @Prop({ required: false })
-  // twoFactorEnabled: string;
 
   @Prop({ required: false })
   defaultLanguage: string;
@@ -71,7 +69,7 @@ export const UserSchema = SchemaFactory.createForClass(User);
 
 // Hooks
 UserSchema.pre<UserDocument>('save', function (next) {
-  this.email = this.email?.trim()?.toLowerCase();
+  this.email = this.email?.trim();
   this.mobilePhone = this.mobilePhone?.trim();
   next();
 });
