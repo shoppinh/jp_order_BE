@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Types } from 'mongoose';
+import { Document, Types } from 'mongoose';
 import { Product, ProductSchema } from 'src/product/schema/product.schema';
 import { BaseSchema } from 'src/shared/schema/base.schema';
 import { Address } from 'src/user/schema/address.schema';

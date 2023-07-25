@@ -1,4 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document } from 'mongoose';
 import { BaseSchema } from 'src/shared/schema/base.schema';
 import { PaymentRate, TaxRate } from 'src/shared/utils/constant/payment';
 
@@ -10,7 +11,7 @@ export class Setting extends BaseSchema {
     required: true,
     default: TaxRate.CASUAL_RATE,
   })
-  texRate: number;
+  taxRate: number;
 
   @Prop({
     required: true,

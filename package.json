@@ -42,7 +42,7 @@
     "libphonenumber-js": "^1.10.18",
     "lodash": "^4.17.21",
     "moment-timezone": "^0.5.43",
-    "mongoose": "^6.9.0",
+    "mongoose": "6.9.0",
     "nest-winston": "^1.8.0",
     "nestjs-i18n": "^9.1.5",
     "passport": "^0.6.0",

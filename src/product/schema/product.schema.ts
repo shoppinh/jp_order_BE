@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Types } from 'mongoose';
+import { Document, Types } from 'mongoose';
 import { Category } from 'src/category/schema/category.schema';
 import { BaseSchema } from 'src/shared/schema/base.schema';
 
@@ -28,14 +28,21 @@ export class Product extends BaseSchema {
   description: string;
 
   @Prop({
-    required: true,
+    required: false,
+    type: [String],
   })
-  imageUrl: string;
+  imageAttachments: string[];
 
   @Prop({
     required: true,
   })
-  SKU: number;
+  SKU: string;
+
+  @Prop({
+    required: true,
+    default: 0,
+  })
+  quantity: number;
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);
