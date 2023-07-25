@@ -9,6 +9,7 @@ import { RoleService } from './service/role.service';
 import { UserTokenService } from './service/user-token.service';
 import { UserDeviceService } from './service/user-device.service';
 import { UserDevice, UserDeviceSchema } from './schema/user-device.schema';
+import { Address, AddressSchema } from './schema/address.schema';
 
 @Module({
   imports: [
@@ -28,6 +29,10 @@ import { UserDevice, UserDeviceSchema } from './schema/user-device.schema';
       {
         name: UserDevice.name,
         schema: UserDeviceSchema,
+      },
+      {
+        name: Address.name,
+        schema: AddressSchema,
       },
     ]),
   ],
