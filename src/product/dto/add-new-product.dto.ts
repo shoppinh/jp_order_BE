@@ -48,4 +48,11 @@ export class AddNewProductDto {
   })
   @IsNumber()
   price: number;
+
+  @ApiModelProperty({
+    required: true,
+  })
+  @IsString()
+  @IsNotEmpty()
+  productSrcURL: string;
 }

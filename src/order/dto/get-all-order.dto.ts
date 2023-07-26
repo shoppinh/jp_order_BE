@@ -4,17 +4,21 @@ import { SortOrder } from 'mongoose';
 import { PaginationDto } from 'src/shared/dto/pagination.dto';
 import { SortOrderDto } from 'src/shared/dto/sort-order.dto';
 
-export class GetAllCategoryDto extends PaginationDto {
+export class GetAllOrderDto extends PaginationDto {
   @ApiModelPropertyOptional()
   @IsOptional()
-  sort: Partial<CategorySortOrder>;
+  sort: Partial<OrderSortOrder>;
   @ApiModelPropertyOptional()
   @IsString()
   @IsOptional()
   search: string;
 }
 
-export class CategorySortOrder extends SortOrderDto {
+export class OrderSortOrder extends SortOrderDto {
   @ApiModelPropertyOptional({ default: 1, description: 'ASC or 1, DESC or -1' })
-  name?: SortOrder;
+  totalPrice?: SortOrder;
+  @ApiModelPropertyOptional({ default: 1, description: 'ASC or 1, DESC or -1' })
+  status?: SortOrder;
+  @ApiModelPropertyOptional({ default: 1, description: 'ASC or 1, DESC or -1' })
+  totalWeight?: SortOrder;
 }

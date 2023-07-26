@@ -43,6 +43,11 @@ export class Product extends BaseSchema {
     default: 0,
   })
   quantity: number;
+
+  @Prop({
+    required: true,
+  })
+  productSrcURL: string;
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);

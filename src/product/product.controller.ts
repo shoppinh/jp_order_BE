@@ -1,10 +1,14 @@
 import {
   Body,
   Controller,
+  Delete,
+  Get,
   HttpCode,
   HttpException,
   HttpStatus,
+  Param,
   Post,
+  Put,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -122,6 +126,125 @@ export class ProductController {
       };
       const result = await this._productService.create(productInstance);
       return new ApiResponse(result);
+    } catch (error) {
+      throw new HttpException(
+        error?.response ??
+          (await i18n.translate(`message.internal_server_error`)),
+        error?.status ?? HttpStatus.INTERNAL_SERVER_ERROR,
+        {
+          cause: error,
+        },
+      );
+    }
+  }
+
+  @Get(':id')
+  @ApiBearerAuth()
+  @ApiBadRequestResponse({ type: ApiException })
+  @HttpCode(HttpStatus.OK)
+  async getProductDetail(@Param('id') id: string, @I18n() i18n: I18nContext) {
+    try {
+      await validateFields({ id }, `common.required_field`, i18n);
+      const result = await this._productService.findById(id);
+      if (!result?._id) {
+        throw new HttpException(
+          await i18n.translate(`message.product_not_found`),
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      return new ApiResponse(result);
+    } catch (error) {
+      throw new HttpException(
+        error?.response ??
+          (await i18n.translate(`message.internal_server_error`)),
+        error?.status ?? HttpStatus.INTERNAL_SERVER_ERROR,
+        {
+          cause: error,
+        },
+      );
+    }
+  }
+
+  @Put(':id')
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard, RolesGuard)
+  @Roles(ConstantRoles.SUPER_USER)
+  @ApiBadRequestResponse({ type: ApiException })
+  @HttpCode(HttpStatus.OK)
+  async updateProduct(
+    @Param('id') id: string,
+    @Body() dto: Partial<AddNewProductDto>,
+    @I18n() i18n: I18nContext,
+  ) {
+    try {
+      await validateFields({ id }, `common.required_field`, i18n);
+      const {
+        name,
+        SKU,
+        categoryId,
+        price,
+        imageAttachments,
+        description,
+        quantity,
+        productSrcURL,
+      } = dto;
+
+      const existedCategory = await this._categoryService.findById(categoryId);
+      if (!existedCategory?._id) {
+        throw new HttpException(
+          await i18n.translate(`message.category_not_found`),
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      const existedProduct = await this._productService.findById(id);
+      if (!existedProduct?._id) {
+        throw new HttpException(
+          await i18n.translate(`message.product_not_found`),
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      const productInstance = {
+        name,
+        SKU,
+        categoryId,
+        price,
+        imageAttachments,
+        description,
+        quantity,
+        productSrcURL,
+      };
+      const result = await this._productService.update(id, productInstance);
+      return new ApiResponse(result);
+    } catch (error) {
+      throw new HttpException(
+        error?.response ??
+          (await i18n.translate(`message.internal_server_error`)),
+        error?.status ?? HttpStatus.INTERNAL_SERVER_ERROR,
+        {
+          cause: error,
+        },
+      );
+    }
+  }
+
+  @Delete(':id')
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard, RolesGuard)
+  @Roles(ConstantRoles.SUPER_USER)
+  @ApiBadRequestResponse({ type: ApiException })
+  @HttpCode(HttpStatus.OK)
+  async deleteProduct(@Param('id') id: string, @I18n() i18n: I18nContext) {
+    try {
+      await validateFields({ id }, `common.required_field`, i18n);
+      const existedProduct = await this._productService.findById(id);
+      if (!existedProduct?._id) {
+        throw new HttpException(
+          await i18n.translate(`message.product_not_found`),
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      await this._productService.delete(id);
+      return new ApiResponse({ status: true });
     } catch (error) {
       throw new HttpException(
         error?.response ??
