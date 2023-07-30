@@ -10,6 +10,7 @@ import { UserTokenService } from './service/user-token.service';
 import { UserDeviceService } from './service/user-device.service';
 import { UserDevice, UserDeviceSchema } from './schema/user-device.schema';
 import { Address, AddressSchema } from './schema/address.schema';
+import { AddressService } from './service/address.service';
 
 @Module({
   imports: [
@@ -37,7 +38,19 @@ import { Address, AddressSchema } from './schema/address.schema';
     ]),
   ],
   controllers: [UserController],
-  providers: [UserService, RoleService, UserTokenService, UserDeviceService],
-  exports: [UserService, RoleService, UserTokenService, UserDeviceService],
+  providers: [
+    UserService,
+    RoleService,
+    UserTokenService,
+    UserDeviceService,
+    AddressService,
+  ],
+  exports: [
+    UserService,
+    RoleService,
+    UserTokenService,
+    UserDeviceService,
+    AddressService,
+  ],
 })
 export class UserModule {}

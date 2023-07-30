@@ -21,8 +21,23 @@ export class Address extends BaseSchema {
   wardId: number;
   @Prop({ required: true })
   address: string;
+  @Prop({ required: true })
+  country: string;
+  @Prop({ required: true })
+  zip: string;
   @Prop({ type: Types.ObjectId, ref: User.name, required: true })
   userId: string;
 }
 
 export const AddressSchema = SchemaFactory.createForClass(Address);
+
+// Hooks
+AddressSchema.pre<AddressDocument>('save', function (next) {
+  this.province = this.province?.trim();
+  this.district = this.district?.trim();
+  this.ward = this.ward?.trim();
+  this.address = this.address?.trim();
+  this.country = this.country?.trim();
+  this.zip = this.zip?.trim();
+  next();
+});

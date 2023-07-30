@@ -17,7 +17,6 @@ import { OrderModule } from './order/order.module';
 import { TransactionModule } from './transaction/transaction.module';
 import { SettingModule } from './setting/setting.module';
 import { AuditModule } from './audit/audit.module';
-import { AddressModule } from './address/address.module';
 @Module({
   imports: [
     ConfigModule.forRoot(),
@@ -46,7 +45,6 @@ import { AddressModule } from './address/address.module';
     TransactionModule,
     SettingModule,
     AuditModule,
-    AddressModule,
   ],
   controllers: [AppController],
   providers: [
