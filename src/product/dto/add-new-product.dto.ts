@@ -2,7 +2,13 @@ import {
   ApiModelProperty,
   ApiModelPropertyOptional,
 } from '@nestjs/swagger/dist/decorators/api-model-property.decorator';
-import { IsArray, IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class AddNewProductDto {
   @ApiModelProperty({
@@ -18,30 +24,32 @@ export class AddNewProductDto {
   @IsString()
   @IsNotEmpty()
   categoryId: string;
-  @ApiModelPropertyOptional({
-    required: false,
-  })
+
+  @ApiModelPropertyOptional()
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   description?: string;
-  @ApiModelPropertyOptional({
-    required: false,
+
+  @ApiModelPropertyOptional()
+  @IsArray({
+    always: false,
   })
-  @IsArray()
   @IsString({ each: true })
+  @IsOptional()
   imageAttachments?: string[];
-  @ApiModelProperty({
-    required: true,
-  })
+
+  @ApiModelPropertyOptional()
   @IsString()
-  @IsNotEmpty()
-  SKU: string;
+  @IsOptional()
+  SKU?: string;
+
   @ApiModelProperty({
     required: true,
     default: 0,
   })
   @IsNumber()
   quantity: number;
+
   @ApiModelProperty({
     required: true,
     default: 0,
@@ -49,10 +57,8 @@ export class AddNewProductDto {
   @IsNumber()
   price: number;
 
-  @ApiModelProperty({
-    required: true,
-  })
+  @ApiModelPropertyOptional()
   @IsString()
-  @IsNotEmpty()
-  productSrcURL: string;
+  @IsOptional()
+  productSrcURL?: string;
 }

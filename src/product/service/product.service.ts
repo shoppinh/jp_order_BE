@@ -3,8 +3,8 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { BaseService } from 'src/shared/service/base.service';
 import { isEmptyObject } from 'src/shared/utils';
-import { ProductSortOrder } from './dto/get-all-product.dto';
-import { Product, ProductDocument } from './schema/product.schema';
+import { ProductSortOrder } from '../dto/get-all-product.dto';
+import { Product, ProductDocument } from '../schema/product.schema';
 
 @Injectable()
 export class ProductService extends BaseService<Product> {

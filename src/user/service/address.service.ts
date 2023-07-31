@@ -21,7 +21,20 @@ export class AddressService extends BaseService<Address> {
     skip: number,
     userId?: string,
   ) {
-    const aggregation = this.model.aggregate().project({ password: 0 });
+    const aggregation = this.model
+      .aggregate()
+      .project({ password: 0 })
+      .lookup({
+        from: 'users',
+        localField: 'userId',
+        foreignField: '_id',
+        as: 'user',
+      })
+      .unwind({
+        path: '$user',
+        preserveNullAndEmptyArrays: true,
+      });
+
     const paginationStage = [];
     if (userId) {
       aggregation.match({

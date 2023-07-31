@@ -23,7 +23,7 @@ export class Product extends BaseSchema {
   price: number;
 
   @Prop({
-    required: true,
+    required: false,
   })
   description: string;
 
@@ -45,7 +45,7 @@ export class Product extends BaseSchema {
   quantity: number;
 
   @Prop({
-    required: true,
+    required: false,
   })
   productSrcURL: string;
 }

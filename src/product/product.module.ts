@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ProductController } from './product.controller';
-import { ProductService } from './product.service';
+import { ProductService } from './service/product.service';
 import {
   OrderProduct,
   OrderProductSchema,
@@ -15,10 +15,6 @@ import { CategoryModule } from 'src/category/category.module';
       {
         name: Product.name,
         schema: ProductSchema,
-      },
-      {
-        name: OrderProduct.name,
-        schema: OrderProductSchema,
       },
     ]),
     CategoryModule,

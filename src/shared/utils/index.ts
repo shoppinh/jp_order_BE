@@ -107,3 +107,21 @@ export function toListResponse(objects: any) {
   }
   return results;
 }
+
+export const generateSKU = (productName: string, productCategory: string) => {
+  // Convert product name, category, and color to uppercase
+  const productNameUpperCase = productName.toUpperCase();
+  const productCategoryUpperCase = productCategory.toUpperCase();
+
+  // Remove spaces and special characters from product name, category, and color
+  const cleanProductName = productNameUpperCase.replace(/[^A-Z0-9]/g, '');
+  const cleanProductCategory = productCategoryUpperCase.replace(
+    /[^A-Z0-9]/g,
+    '',
+  );
+
+  // Concatenate the cleaned information to form the SKU
+  const SKU = `${cleanProductCategory}-${cleanProductName}`;
+
+  return SKU;
+};

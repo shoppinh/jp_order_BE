@@ -31,13 +31,17 @@ import { GetUser } from 'src/shared/decorator/current-user.decorator';
 import { User } from 'src/user/schema/user.schema';
 import { Types } from 'mongoose';
 import { AddNewOrderDto } from './dto/add-new-order.dto';
+import { AddressService } from 'src/user/service/address.service';
 
 @Controller('api/order')
 @ApiTags('Order')
 @ApiHeader({ name: 'locale', description: 'en' })
 @ApiHeader({ name: 'version', description: '1' })
 export class OrderController {
-  constructor(private readonly _orderService: OrderService) {}
+  constructor(
+    private readonly _orderService: OrderService,
+    private readonly _addressService: AddressService,
+  ) {}
 
   @Post('list')
   @UseGuards(RolesGuard, JwtGuard)
@@ -154,13 +158,13 @@ export class OrderController {
     try {
       const { addressId, items, status, totalPrice, totalWeight } = dto;
       await validateFields({ addressId }, 'common.required_field', i18n);
-      // const existedAddress = await this._addressService.findById(addressId);
-      // if (!existedAddress) {
-      //   throw new HttpException(
-      //     await i18n.translate(`address.address_not_found`),
-      //     HttpStatus.BAD_REQUEST,
-      //   );
-      // }
+      const existedAddress = await this._addressService.findById(addressId);
+      if (!existedAddress) {
+        throw new HttpException(
+          await i18n.translate(`address.address_not_found`),
+          HttpStatus.BAD_REQUEST,
+        );
+      }
       const orderInstance = {
         addressId: new Types.ObjectId(addressId),
         items,
@@ -198,13 +202,13 @@ export class OrderController {
     try {
       await validateFields({ id }, 'common.required_field', i18n);
       const { addressId, items, status, totalPrice, totalWeight } = dto;
-      // const existedAddress = await this._addressService.findById(addressId);
-      // if (!existedAddress) {
-      //   throw new HttpException(
-      //     await i18n.translate(`address.address_not_found`),
-      //     HttpStatus.BAD_REQUEST,
-      //   );
-      // }
+      const existedAddress = await this._addressService.findById(addressId);
+      if (!existedAddress) {
+        throw new HttpException(
+          await i18n.translate(`address.address_not_found`),
+          HttpStatus.BAD_REQUEST,
+        );
+      }
       const existedOrder = await this._orderService.findOne({
         _id: new Types.ObjectId(id),
         userId: new Types.ObjectId(user._id),

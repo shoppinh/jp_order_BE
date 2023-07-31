@@ -17,12 +17,12 @@ import {
   ApiHeader,
   ApiTags,
 } from '@nestjs/swagger';
-import { ProductService } from './product.service';
+import { ProductService } from './service/product.service';
 import { I18n, I18nContext } from 'nestjs-i18n';
 import { ApiException } from 'src/shared/type/api-exception.model';
 import { GetAllProductDto } from './dto/get-all-product.dto';
 import { ApiResponse } from 'src/shared/response/api.response';
-import { toListResponse, validateFields } from 'src/shared/utils';
+import { generateSKU, toListResponse, validateFields } from 'src/shared/utils';
 import { JwtGuard } from 'src/auth/guard/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guard/role.guard';
 import { ConstantRoles } from 'src/shared/utils/constant/role';
@@ -89,29 +89,15 @@ export class ProductController {
         price,
         imageAttachments,
         description,
-        SKU,
         quantity,
       } = dto;
 
-      await validateFields(
-        { name, categoryId, SKU },
-        `common.required_field`,
-        i18n,
-      );
+      await validateFields({ name, categoryId }, `common.required_field`, i18n);
 
       const existedCategory = await this._categoryService.findById(categoryId);
       if (!existedCategory?._id) {
         throw new HttpException(
           await i18n.translate(`message.category_not_found`),
-          HttpStatus.BAD_REQUEST,
-        );
-      }
-      const existedProduct = await this._productService.findOne({
-        SKU,
-      });
-      if (existedProduct?._id) {
-        throw new HttpException(
-          await i18n.translate(`message.product_existed`),
           HttpStatus.BAD_REQUEST,
         );
       }
@@ -121,7 +107,7 @@ export class ProductController {
         price,
         imageAttachments,
         description,
-        SKU,
+        SKU: generateSKU(name, existedCategory?.name),
         quantity,
       };
       const result = await this._productService.create(productInstance);
@@ -180,7 +166,6 @@ export class ProductController {
       await validateFields({ id }, `common.required_field`, i18n);
       const {
         name,
-        SKU,
         categoryId,
         price,
         imageAttachments,
@@ -205,7 +190,7 @@ export class ProductController {
       }
       const productInstance = {
         name,
-        SKU,
+        SKU: generateSKU(name || existedProduct?.name, existedCategory?.name),
         categoryId,
         price,
         imageAttachments,

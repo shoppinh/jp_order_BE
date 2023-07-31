@@ -53,6 +53,16 @@ export abstract class BaseService<T extends BaseSchema> {
     }).save();
   }
 
+  async createMany(createDtos: T[] | BaseDto[]): Promise<T[]> {
+    return await this.model.insertMany(
+      createDtos.map((dto) => ({
+        ...dto,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })),
+    );
+  }
+
   async update(id: string, updateDto: T | BaseDto, populate = ''): Promise<T> {
     const updated = this.model.findByIdAndUpdate(
       id,
