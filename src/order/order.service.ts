@@ -67,25 +67,4 @@ export class OrderService extends BaseService<Order> {
       })
       .exec();
   }
-
-  async getOrderDetails(orderId: Types.ObjectId, userId?: Types.ObjectId) {
-    const aggregation = this.model.aggregate();
-    aggregation.match({
-      $or: [
-        {
-          _id: { $eq: orderId },
-        },
-      ],
-    });
-    if (userId) {
-      aggregation.match({
-        $or: [
-          {
-            userId: { $eq: userId },
-          },
-        ],
-      });
-    }
-    return aggregation.exec();
-  }
 }

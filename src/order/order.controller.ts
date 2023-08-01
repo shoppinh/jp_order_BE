@@ -44,42 +44,12 @@ export class OrderController {
   ) {}
 
   @Post('list')
-  @UseGuards(RolesGuard, JwtGuard)
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard, RolesGuard)
   @Roles(ConstantRoles.SUPER_USER)
-  @ApiBearerAuth()
   @ApiBadRequestResponse({ type: ApiException })
   @HttpCode(HttpStatus.OK)
-  async getAllOrder(@Body() dto: GetAllOrderDto, @I18n() i18n: I18nContext) {
-    try {
-      const { limit, search, skip, sort } = dto;
-      const result = await this._orderService.getOrderList(
-        sort,
-        search,
-        skip,
-        limit,
-      );
-      const [{ totalRecords, data }] = result;
-      return new ApiResponse({
-        ...toListResponse([data, totalRecords?.[0]?.total ?? 0]),
-      });
-    } catch (error) {
-      throw new HttpException(
-        error?.response ??
-          (await i18n.translate(`message.internal_server_error`)),
-        error?.status ?? HttpStatus.INTERNAL_SERVER_ERROR,
-        {
-          cause: error,
-        },
-      );
-    }
-  }
-
-  @Post('list-by-user')
-  @UseGuards(JwtGuard)
-  @ApiBearerAuth()
-  @ApiBadRequestResponse({ type: ApiException })
-  @HttpCode(HttpStatus.OK)
-  async getAllOrderByUser(
+  async getAllOrder(
     @Body() dto: GetAllOrderDto,
     @I18n() i18n: I18nContext,
     @GetUser() user: User,
@@ -91,7 +61,7 @@ export class OrderController {
         search,
         skip,
         limit,
-        user._id,
+        user?.role === ConstantRoles.SUPER_USER ? undefined : user._id,
       );
       const [{ totalRecords, data }] = result;
       return new ApiResponse({
@@ -121,18 +91,19 @@ export class OrderController {
   ) {
     try {
       await validateFields({ id }, 'common.required_field', i18n);
-      if (user.role !== ConstantRoles.SUPER_USER) {
-        const result = await this._orderService.getOrderDetails(
-          new Types.ObjectId(id),
-          new Types.ObjectId(user._id),
+      const result = await this._orderService.findOne({
+        _id: new Types.ObjectId(id),
+        ...(user.role !== ConstantRoles.SUPER_USER && {
+          userId: new Types.ObjectId(user._id),
+        }),
+      });
+      if (!result) {
+        throw new HttpException(
+          await i18n.translate(`order.order_not_found`),
+          HttpStatus.BAD_REQUEST,
         );
-        return new ApiResponse(result);
-      } else {
-        const result = await this._orderService.getOrderDetails(
-          new Types.ObjectId(id),
-        );
-        return new ApiResponse(result);
       }
+      return new ApiResponse(result);
     } catch (error) {
       throw new HttpException(
         error?.response ??
@@ -202,16 +173,21 @@ export class OrderController {
     try {
       await validateFields({ id }, 'common.required_field', i18n);
       const { addressId, items, status, totalPrice, totalWeight } = dto;
-      const existedAddress = await this._addressService.findById(addressId);
-      if (!existedAddress) {
-        throw new HttpException(
-          await i18n.translate(`address.address_not_found`),
-          HttpStatus.BAD_REQUEST,
-        );
+      if (addressId) {
+        const existedAddress = await this._addressService.findById(addressId);
+        if (!existedAddress) {
+          throw new HttpException(
+            await i18n.translate(`address.address_not_found`),
+            HttpStatus.BAD_REQUEST,
+          );
+        }
       }
+
       const existedOrder = await this._orderService.findOne({
         _id: new Types.ObjectId(id),
-        userId: new Types.ObjectId(user._id),
+        ...(user.role !== ConstantRoles.SUPER_USER && {
+          userId: new Types.ObjectId(user._id),
+        }),
       });
       if (!existedOrder) {
         throw new HttpException(
@@ -220,13 +196,52 @@ export class OrderController {
         );
       }
       const orderInstance = {
-        addressId: new Types.ObjectId(addressId),
+        ...(addressId && { addressId: new Types.ObjectId(addressId) }),
         items,
         status,
         totalPrice,
         totalWeight,
       };
       const result = await this._orderService.update(id, orderInstance);
+      return new ApiResponse(result);
+    } catch (error) {
+      throw new HttpException(
+        error?.response ??
+          (await i18n.translate(`message.internal_server_error`)),
+        error?.status ?? HttpStatus.INTERNAL_SERVER_ERROR,
+        {
+          cause: error,
+        },
+      );
+    }
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
+  @ApiBadRequestResponse({ type: ApiException })
+  @HttpCode(HttpStatus.OK)
+  async deleteOrder(
+    @Param('id') id: string,
+    @I18n() i18n: I18nContext,
+    @GetUser() user: User,
+  ) {
+    try {
+      await validateFields({ id }, 'common.required_field', i18n);
+
+      const existedOrder = await this._orderService.findOne({
+        _id: new Types.ObjectId(id),
+        ...(user.role !== ConstantRoles.SUPER_USER && {
+          userId: new Types.ObjectId(user._id),
+        }),
+      });
+      if (!existedOrder) {
+        throw new HttpException(
+          await i18n.translate(`order.order_not_found`),
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      const result = await this._orderService.delete(id);
       return new ApiResponse(result);
     } catch (error) {
       throw new HttpException(
