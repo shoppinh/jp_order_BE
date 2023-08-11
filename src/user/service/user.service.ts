@@ -5,21 +5,30 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { UserSortOrder } from 'src/shared/type/user';
 import {
+  getRandomCode,
   isEmptyObject,
   isPhoneNumberValidation,
+  isProductionEnv,
   isValidEmail,
   passwordGenerate,
+  printLog,
+  standardPhoneNumber,
   validateFields,
 } from 'src/shared/utils';
 import { AddUserDto } from '../dto/add-user.dto';
 import { I18nContext } from 'nestjs-i18n';
 import { RoleService } from './role.service';
+import { UserActiveService } from './user-active.service';
+import { OtpLoginDto } from '../dto/otp-login.dto';
+import { ConstantUser } from '../../shared/utils/constant';
+import { UserActives } from '../schema/user-active.schema';
 
 @Injectable()
 export class UserService extends BaseService<User> {
   constructor(
     @InjectModel(User.name) readonly modelUser: Model<UserDocument>,
     private readonly _roleService: RoleService,
+    private readonly _userActiveService: UserActiveService,
   ) {
     super();
     this.model = modelUser;
@@ -155,5 +164,104 @@ export class UserService extends BaseService<User> {
     };
 
     return await this.model.create(userInstance);
+  }
+
+  async sendOtpToUser(user: User, i18n: I18nContext) {
+    let userActive: UserActives = await this._userActiveService.findOne({
+      mobilePhone: standardPhoneNumber(user.mobilePhone),
+    });
+    const smsCode =
+      ConstantUser.REVIEW_PHONE_NUMBER.concat(
+        ConstantUser.ADMIN_PHONE_NUMBERS,
+      ).indexOf(user.mobilePhone) > -1
+        ? ConstantUser.REVIEW_PHONE_NUMBER_OTP
+        : getRandomCode();
+    const data = {
+      mobilePhone: standardPhoneNumber(user.mobilePhone),
+      smsCode,
+      status: ConstantUser.STEP_VERIFIED_SMS_CODE,
+      codeExpiredSecond: ConstantUser.CODE_EXPIRED_SECONDS,
+    };
+
+    if (!userActive) {
+      userActive = await this._userActiveService.create(data);
+    } else {
+      userActive = await this._userActiveService.update(userActive._id, data);
+    }
+    await this.update(user?._id, { status: ConstantUser.IS_ACTIVE });
+
+    // if (
+    //   user?.isSmsSend &&
+    //   ConstantUser.REVIEW_PHONE_NUMBER.indexOf(user.mobilePhone) <= -1
+    // ) {
+    //   sendSMS(
+    //     await i18n.translate(`user.your_dsr_verification_code`, {
+    //       args: { code: smsCode },
+    //     }),
+    //     '',
+    //     standardPhoneNumber(user.mobilePhone),
+    //   );
+    // }
+
+    return userActive;
+  }
+
+  async resendOtp(dto: OtpLoginDto, i18n: I18nContext) {
+    try {
+      const user = await this.model.findOne({ username: dto.username });
+      const { mobilePhone } = user;
+      let userActive: UserActives = await this._userActiveService.findOne({
+        mobilePhone: standardPhoneNumber(mobilePhone),
+      });
+
+      if (!userActive) {
+        throw new HttpException(
+          await i18n.translate(`user.sms_invalid_field`),
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      const { createdAt } = userActive;
+      const now = new Date().getTime();
+      const getTimeCreateAt = new Date(createdAt).getTime();
+
+      const secondBetween = Math.abs((now - getTimeCreateAt) / 1000);
+
+      if (secondBetween > ConstantUser.CODE_EXPIRED_SECONDS) {
+        const smsCode = getRandomCode();
+        const data = {
+          mobilePhone: standardPhoneNumber(mobilePhone),
+          smsCode,
+          status: ConstantUser.RESEND_OTP,
+          codeExpiredSecond: ConstantUser.CODE_EXPIRED_SECONDS,
+        };
+        if (!userActive) {
+          userActive = await this._userActiveService.create(data);
+        } else {
+          userActive = await this._userActiveService.update(
+            userActive._id,
+            data,
+          );
+        }
+
+        // if (user?.isSmsSend) {
+        //   sendSMS(
+        //     await i18n.translate(`user.your_dsr_verification_code`, {
+        //       args: { code: smsCode },
+        //     }),
+        //     '',
+        //     standardPhoneNumber(mobilePhone),
+        //   ).then();
+        // }
+        return {
+          mobilePhone: userActive?.mobilePhone,
+          smsCode: !isProductionEnv() ? userActive?.smsCode : '',
+          codeExpiredSecond: ConstantUser.CODE_EXPIRED_SECONDS,
+        };
+      }
+      throw new HttpException('Do not resend otp', HttpStatus.BAD_REQUEST);
+    } catch (error) {
+      printLog(error);
+      throw new HttpException(error, HttpStatus.BAD_REQUEST);
+    }
   }
 }

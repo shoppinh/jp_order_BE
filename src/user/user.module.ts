@@ -9,6 +9,8 @@ import { RoleService } from './service/role.service';
 import { UserTokenService } from './service/user-token.service';
 import { UserDeviceService } from './service/user-device.service';
 import { UserDevice, UserDeviceSchema } from './schema/user-device.schema';
+import { UserActives, UserActiveSchema } from './schema/user-active.schema';
+import { UserActiveService } from './service/user-active.service';
 
 @Module({
   imports: [
@@ -29,10 +31,26 @@ import { UserDevice, UserDeviceSchema } from './schema/user-device.schema';
         name: UserDevice.name,
         schema: UserDeviceSchema,
       },
+      {
+        name: UserActives.name,
+        schema: UserActiveSchema,
+      },
     ]),
   ],
   controllers: [UserController],
-  providers: [UserService, RoleService, UserTokenService, UserDeviceService],
-  exports: [UserService, RoleService, UserTokenService, UserDeviceService],
+  providers: [
+    UserService,
+    RoleService,
+    UserTokenService,
+    UserDeviceService,
+    UserActiveService,
+  ],
+  exports: [
+    UserService,
+    RoleService,
+    UserTokenService,
+    UserDeviceService,
+    UserActiveService,
+  ],
 })
 export class UserModule {}

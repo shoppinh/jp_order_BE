@@ -28,6 +28,7 @@ import { AuthService } from './auth.service';
 import { UserDeviceService } from 'src/user/service/user-device.service';
 import { UserService } from 'src/user/service/user.service';
 import { AddUserDto } from 'src/user/dto/add-user.dto';
+
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -35,6 +36,7 @@ export class AuthController {
     private readonly _userDeviceService: UserDeviceService,
     private readonly _userService: UserService,
   ) {}
+
   @Post('login')
   @ApiCreatedResponse({ type: LoginResponseDto })
   @ApiBadRequestResponse({ type: ApiException })
@@ -158,4 +160,21 @@ export class AuthController {
       await this._authService.register(registerUserDto, i18n),
     );
   }
+
+  @Post('forgot-password')
+  @ApiBadRequestResponse({ type: ApiException })
+  async forgotPassword(@Body() body: any, @I18n() i18n: I18nContext) {}
+
+  @Post('reset-password')
+  @ApiBadRequestResponse({ type: ApiException })
+  async resetPassword(@Body() body: any, @I18n() i18n: I18nContext) {}
+
+  // TODO: Implement Send OTP later
+  @Post('verify-forgot-password')
+  @ApiBadRequestResponse({ type: ApiException })
+  async verifyForgotPassword(@Body() body: any, @I18n() i18n: I18nContext) {}
+
+  @Post('resend-otp')
+  @ApiBadRequestResponse({ type: ApiException })
+  async resendOtp(@Body() body: any, @I18n() i18n: I18nContext) {}
 }

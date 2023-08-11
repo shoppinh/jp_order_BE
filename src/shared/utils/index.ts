@@ -3,18 +3,21 @@ import { isValidPhoneNumber, parsePhoneNumber } from 'libphonenumber-js';
 import { I18nContext } from 'nestjs-i18n';
 import * as _ from 'lodash';
 import { genSalt, hash } from 'bcryptjs';
+
 export function isEmptyArray(objects: any) {
   if (!objects) {
     return true;
   }
   return !objects.length;
 }
+
 export function isEmptyObject(objects: any) {
   if (!objects) {
     return true;
   }
   return !Object.keys(objects).length;
 }
+
 export function isEmptyObjectOrArray(objects: any) {
   if (!objects) {
     return true;
@@ -24,11 +27,7 @@ export function isEmptyObjectOrArray(objects: any) {
   }
   return isEmptyObject(objects);
 }
-export const isValidEmail = (email: string) => {
-  return /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(
-    email,
-  );
-};
+
 export const isPhoneNumberValidation = (number: string) => {
   try {
     if (number.startsWith('0')) {
@@ -52,14 +51,30 @@ export const isPhoneNumberValidation = (number: string) => {
     return false;
   }
 };
-export const standardPhoneNumber = (number: string) => {
+export const standardPhoneNumber = (
+  number: string,
+  phoneCountryCode?: string,
+) => {
   number = number.trim();
   if (!number) {
     return number;
   }
 
+  if (phoneCountryCode) {
+    phoneCountryCode = phoneCountryCode.replace('+', '');
+  }
+
+  if (!number.startsWith('0') && !number.startsWith('+')) {
+    number = `${
+      phoneCountryCode || process.env.PHONE_COUNTRY_CODE_DEFAULT
+    }${number}`;
+  }
+
   if (number.startsWith('0')) {
-    number = number.replace('0', process.env.PHONE_COUNTRY_CODE_DEFAULT);
+    number = number.replace(
+      '0',
+      phoneCountryCode || process.env.PHONE_COUNTRY_CODE_DEFAULT,
+    );
   }
 
   if (!number.startsWith('+')) {
@@ -94,6 +109,7 @@ export const passwordGenerate = async (password: string) => {
   const salt = await genSalt(10);
   return await hash(password, salt);
 };
+
 export function toListResponse(objects: any) {
   let results = {
     totalItem: 0,
@@ -107,3 +123,24 @@ export function toListResponse(objects: any) {
   }
   return results;
 }
+
+export const printLog = (...message) => {
+  if (process.env.DEBUG_MODE === 'true') {
+    console.log(...message);
+  }
+};
+export const isValidEmail = (email: string) => {
+  return /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(
+    email,
+  );
+};
+
+export const getRandomCode = (start = 100000) => {
+  return Math.floor(start + Math.random() * 900000).toString();
+};
+export const isProductionEnv = () => {
+  return (
+    process.env.NODE_ENV?.toLowerCase() === 'production' ||
+    process.env.NODE_ENV?.toLowerCase() === 'prod'
+  );
+};
