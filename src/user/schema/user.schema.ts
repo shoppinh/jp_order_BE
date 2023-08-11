@@ -3,6 +3,7 @@ import { BaseSchema } from '../../shared/schema/base.schema';
 import { Exclude } from 'class-transformer';
 import { Document } from 'mongoose';
 import { ConstantRoles } from 'src/shared/utils/constant/role';
+import { ConversionRate } from 'src/shared/utils/constant/payment';
 
 export type UserDocument = User & Document;
 
@@ -51,6 +52,12 @@ export class User extends BaseSchema {
 
   @Prop({ required: false, default: true })
   isActive?: boolean;
+
+  @Prop({ required: true, default: ConversionRate.CASUAL_RATE })
+  conversionRate: number;
+
+  @Prop({ required: true, default: 0 })
+  balance: number;
 
   @Prop({ required: true, default: ConstantRoles.ACCOUNTANT })
   role: string;

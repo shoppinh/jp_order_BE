@@ -11,6 +11,8 @@ import { UserDeviceService } from './service/user-device.service';
 import { UserDevice, UserDeviceSchema } from './schema/user-device.schema';
 import { UserActives, UserActiveSchema } from './schema/user-active.schema';
 import { UserActiveService } from './service/user-active.service';
+import { Address, AddressSchema } from './schema/address.schema';
+import { AddressService } from './service/address.service';
 
 @Module({
   imports: [
@@ -32,6 +34,10 @@ import { UserActiveService } from './service/user-active.service';
         schema: UserDeviceSchema,
       },
       {
+        name: Address.name,
+        schema: AddressSchema,
+      },
+      {
         name: UserActives.name,
         schema: UserActiveSchema,
       },
@@ -44,6 +50,7 @@ import { UserActiveService } from './service/user-active.service';
     UserTokenService,
     UserDeviceService,
     UserActiveService,
+      AddressService
   ],
   exports: [
     UserService,
@@ -51,6 +58,7 @@ import { UserActiveService } from './service/user-active.service';
     UserTokenService,
     UserDeviceService,
     UserActiveService,
+      AddressService
   ],
 })
 export class UserModule {}

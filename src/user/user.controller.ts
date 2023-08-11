@@ -36,6 +36,11 @@ import { GetAllUserDto } from './dto/get-all-user.dto';
 import { RoleService } from './service/role.service';
 import { JwtGuard } from 'src/auth/guard/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guard/role.guard';
+import { GetUser } from 'src/shared/decorator/current-user.decorator';
+import { User } from './schema/user.schema';
+import { GetAllAddressDto } from './dto/get-all-address.dto';
+import { AddressService } from './service/address.service';
+import { AddNewAddressDto } from './dto/add-new-address.dto';
 
 @Controller('api/user')
 @ApiTags('User')
@@ -46,6 +51,7 @@ export class UserController {
   constructor(
     private readonly _userService: UserService,
     private readonly _roleService: RoleService,
+    private readonly _addressService: AddressService,
   ) {}
 
   // User controller collection
@@ -93,10 +99,7 @@ export class UserController {
     try {
       await validateFields({ id }, `common.required_field`, i18n);
       //Check if user exists
-      const user = await this._userService.findOne(
-        { _id: new Types.ObjectId(id) },
-        { password: 0 },
-      );
+      const user = await this._userService.findById(id);
       if (!user) {
         throw new HttpException(
           await i18n.translate(`common.not_found`, {
@@ -109,6 +112,39 @@ export class UserController {
       return new ApiResponse(user);
     } catch (error) {
       console.log('error', error);
+      throw new HttpException(
+        error?.response ??
+          (await i18n.translate(`message.internal_server_error`)),
+        error?.status ?? HttpStatus.INTERNAL_SERVER_ERROR,
+        {
+          cause: error,
+        },
+      );
+    }
+  }
+
+  @Get('profile')
+  @ApiBearerAuth()
+  @ApiBadRequestResponse({ type: ApiException })
+  @HttpCode(HttpStatus.OK)
+  async getProfile(@GetUser() user: User, @I18n() i18n: I18nContext) {
+    try {
+      const result = await this._userService.findOne(
+        {
+          _id: new Types.ObjectId(user._id),
+        },
+        { password: 0 },
+      );
+      if (!result) {
+        throw new HttpException(
+          await i18n.translate(`common.not_found`, {
+            args: { fieldName: 'user' },
+          }),
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      return new ApiResponse(result);
+    } catch (error) {
       throw new HttpException(
         error?.response ??
           (await i18n.translate(`message.internal_server_error`)),
@@ -290,6 +326,217 @@ export class UserController {
         {
           cause: error,
         },
+      );
+    }
+  }
+
+  // Address
+
+  // Get address list of user
+  @Post('address/list')
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard)
+  @ApiBadRequestResponse({ type: ApiException })
+  @HttpCode(HttpStatus.OK)
+  async getAddressList(
+    @Body() dto: GetAllAddressDto,
+    @I18n() i18n: I18nContext,
+    @GetUser() user: User,
+  ) {
+    try {
+      const { skip, limit, sort, search } = dto;
+      const result = await this._addressService.getAddressList(
+        sort,
+        search,
+        limit,
+        skip,
+        user.role !== ConstantRoles.SUPER_USER ? user._id : undefined,
+      );
+      const [{ totalRecords, data }] = result;
+      return new ApiResponse({
+        ...toListResponse([data, totalRecords?.[0]?.total ?? 0]),
+      });
+    } catch (error) {
+      throw new HttpException(
+        error?.response ??
+          (await i18n.translate(`message.internal_server_error`)),
+        error?.status ?? HttpStatus.INTERNAL_SERVER_ERROR,
+        {
+          cause: error,
+        },
+      );
+    }
+  }
+
+  // Get address detail
+  @Get('address/:id')
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard)
+  @ApiBadRequestResponse({ type: ApiException })
+  @HttpCode(HttpStatus.OK)
+  async getAddressDetail(
+    @Param('id') id: string,
+    @I18n() i18n: I18nContext,
+    @GetUser() user: User,
+  ) {
+    try {
+      await validateFields({ id }, `common.required_field`, i18n);
+      const address = await this._addressService.getAddressDetail(
+        id,
+        user?.role !== ConstantRoles.SUPER_USER ? user._id : undefined,
+      );
+
+      if (!address) {
+        throw new HttpException(
+          await i18n.translate(`common.not_found`, {
+            args: { fieldName: 'address' },
+          }),
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      return new ApiResponse(address);
+    } catch (error) {
+      throw new HttpException(
+        error?.response ??
+          (await i18n.translate(`message.internal_server_error`)),
+        error?.status ?? HttpStatus.INTERNAL_SERVER_ERROR,
+        {
+          cause: error,
+        },
+      );
+    }
+  }
+
+  // Add new address
+  @Post('address')
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard)
+  @ApiBadRequestResponse({ type: ApiException })
+  @HttpCode(HttpStatus.OK)
+  async addNewAddress(
+    @Body() addAddressDto: AddNewAddressDto,
+    @I18n() i18n: I18nContext,
+    @GetUser() user: User,
+  ) {
+    try {
+      const {
+        address,
+        country,
+        district,
+        districtId,
+        province,
+        provinceId,
+        ward,
+        wardId,
+        zip,
+      } = addAddressDto;
+
+      const addressInstance: any = {
+        address: address?.trim(),
+        country: country?.trim(),
+        district: district?.trim(),
+        districtId: districtId,
+        province: province?.trim(),
+        provinceId: provinceId,
+        ward: ward?.trim(),
+        wardId: wardId,
+        zip: zip?.trim(),
+        userId: user._id,
+      };
+      const result = await this._addressService.create(addressInstance);
+      return new ApiResponse(result);
+    } catch (error) {
+      throw new HttpException(
+        error?.response ??
+          (await i18n.translate(`message.internal_server_error`)),
+        error?.status ?? HttpStatus.INTERNAL_SERVER_ERROR,
+        {
+          cause: error,
+        },
+      );
+    }
+  }
+
+  // Update address
+  @Put('address/:id')
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard)
+  @ApiBadRequestResponse({ type: ApiException })
+  @HttpCode(HttpStatus.OK)
+  async updateAddress(
+    @Body() updateAddressDto: Partial<AddNewAddressDto>,
+    @I18n() i18n: I18nContext,
+    @GetUser() user: User,
+    @Param('id') id: string,
+  ) {
+    try {
+      await validateFields(id, `common.required_field`, i18n);
+
+      const existedAddress = await this._addressService.findOne({
+        _id: new Types.ObjectId(id),
+        ...(user?.role !== ConstantRoles.SUPER_USER && {
+          userId: new Types.ObjectId(user._id),
+        }),
+      });
+      if (!existedAddress) {
+        throw new HttpException(
+          await i18n.translate(`common.not_found`, {
+            args: { fieldName: 'address' },
+          }),
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      const result = await this._addressService.update(id, updateAddressDto);
+      return new ApiResponse(result);
+    } catch (error) {
+      throw new HttpException(
+        error?.response ??
+          (await i18n.translate(`message.internal_server_error`)),
+        error?.status ?? HttpStatus.INTERNAL_SERVER_ERROR,
+        {
+          cause: error,
+        },
+      );
+    }
+  }
+
+  @Delete('address/:id')
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard)
+  @ApiBadRequestResponse({ type: ApiException })
+  @HttpCode(HttpStatus.OK)
+  async deleteAddress(
+    @Param('id') id: string,
+    @I18n() i18n: I18nContext,
+    @GetUser() user: User,
+  ) {
+    try {
+      await validateFields({ id }, `common.required_field`, i18n);
+      const existedAddress = await this._addressService.findOne({
+        _id: new Types.ObjectId(id),
+        ...(user?.role !== ConstantRoles.SUPER_USER && {
+          userId: new Types.ObjectId(user._id),
+        }),
+      });
+      if (!existedAddress) {
+        throw new HttpException(
+          await i18n.translate(`common.not_found`, {
+            args: { fieldName: 'address' },
+          }),
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      await this._addressService.delete(id);
+      return new ApiResponse({
+        status: true,
+      });
+    } catch (error) {
+      throw new HttpException(
+        error?.response ??
+          (await i18n.translate(`message.internal_server_error`)),
+        error?.status ?? HttpStatus.INTERNAL_SERVER_ERROR,
+        { cause: error },
       );
     }
   }

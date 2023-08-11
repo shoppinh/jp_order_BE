@@ -1,43 +1,36 @@
 import { Injectable } from '@nestjs/common';
-import { BaseService } from 'src/shared/service/base.service';
-import { Order, OrderDocument } from './schema/order.schema';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
-import { OrderSortOrder } from './dto/get-all-order.dto';
+import { Model } from 'mongoose';
+import { BaseService } from 'src/shared/service/base.service';
 import { isEmptyObject } from 'src/shared/utils';
+import { ProductSortOrder } from '../dto/get-all-product.dto';
+import { Product, ProductDocument } from '../schema/product.schema';
 
 @Injectable()
-export class OrderService extends BaseService<Order> {
+export class ProductService extends BaseService<Product> {
   constructor(
-    @InjectModel(Order.name) readonly _orderModel: Model<OrderDocument>,
+    @InjectModel(Product.name) readonly model: Model<ProductDocument>,
   ) {
     super();
-    this.model = _orderModel;
+    this.model = model;
   }
 
-  async getOrderList(
-    sort: OrderSortOrder,
+  async getProductList(
+    sort: ProductSortOrder,
     search: string,
     skip: number,
     limit: number,
-    userId?: string,
   ) {
     const aggregation = this.model.aggregate();
     const paginationStage = [];
-    if (userId) {
-      aggregation.match({
-        $or: [
-          {
-            userId: { $eq: userId },
-          },
-        ],
-      });
-    }
     if (search) {
       aggregation.match({
         $or: [
           {
             name: { $eq: search },
+          },
+          {
+            SKU: { $eq: search },
           },
         ],
       });

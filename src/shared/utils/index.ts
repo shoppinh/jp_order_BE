@@ -3,21 +3,18 @@ import { isValidPhoneNumber, parsePhoneNumber } from 'libphonenumber-js';
 import { I18nContext } from 'nestjs-i18n';
 import * as _ from 'lodash';
 import { genSalt, hash } from 'bcryptjs';
-
 export function isEmptyArray(objects: any) {
   if (!objects) {
     return true;
   }
   return !objects.length;
 }
-
 export function isEmptyObject(objects: any) {
   if (!objects) {
     return true;
   }
   return !Object.keys(objects).length;
 }
-
 export function isEmptyObjectOrArray(objects: any) {
   if (!objects) {
     return true;
@@ -27,7 +24,6 @@ export function isEmptyObjectOrArray(objects: any) {
   }
   return isEmptyObject(objects);
 }
-
 export const isPhoneNumberValidation = (number: string) => {
   try {
     if (number.startsWith('0')) {
@@ -109,7 +105,6 @@ export const passwordGenerate = async (password: string) => {
   const salt = await genSalt(10);
   return await hash(password, salt);
 };
-
 export function toListResponse(objects: any) {
   let results = {
     totalItem: 0,
@@ -143,4 +138,22 @@ export const isProductionEnv = () => {
     process.env.NODE_ENV?.toLowerCase() === 'production' ||
     process.env.NODE_ENV?.toLowerCase() === 'prod'
   );
+};
+
+export const generateSKU = (productName: string, productCategory: string) => {
+  // Convert product name, category, and color to uppercase
+  const productNameUpperCase = productName.toUpperCase();
+  const productCategoryUpperCase = productCategory.toUpperCase();
+
+  // Remove spaces and special characters from product name, category, and color
+  const cleanProductName = productNameUpperCase.replace(/[^A-Z0-9]/g, '');
+  const cleanProductCategory = productCategoryUpperCase.replace(
+    /[^A-Z0-9]/g,
+    '',
+  );
+
+  // Concatenate the cleaned information to form the SKU
+  const SKU = `${cleanProductCategory}-${cleanProductName}`;
+
+  return SKU;
 };
