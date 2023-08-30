@@ -8,8 +8,8 @@ async function bootstrap() {
   if (process.env.NODE_ENV !== 'production') {
     app.enableCors();
     const config = new DocumentBuilder()
-      .setTitle('Parent-Teacher-Communication')
-      .setDescription('PTC API description')
+      .setTitle('JP_Order')
+      .setDescription('JP_Order API description')
       .setVersion('1.0')
       .addBearerAuth()
       .build();

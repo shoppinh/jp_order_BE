@@ -12,6 +12,8 @@ import {
   ApiCreatedResponse,
   ApiBadRequestResponse,
   ApiBearerAuth,
+  ApiTags,
+  ApiHeader,
 } from '@nestjs/swagger';
 import { I18n, I18nContext } from 'nestjs-i18n';
 import { GetUser } from 'src/shared/decorator/current-user.decorator';
@@ -28,8 +30,10 @@ import { AuthService } from './auth.service';
 import { UserDeviceService } from 'src/user/service/user-device.service';
 import { UserService } from 'src/user/service/user.service';
 import { AddUserDto } from 'src/user/dto/add-user.dto';
-
-@Controller('auth')
+@Controller('api/auth')
+@ApiTags('Auth')
+@ApiHeader({ name: 'locale', description: 'en' })
+@ApiHeader({ name: 'version', description: '1' })
 export class AuthController {
   constructor(
     private readonly _authService: AuthService,

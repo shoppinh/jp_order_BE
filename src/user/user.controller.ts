@@ -90,7 +90,7 @@ export class UserController {
     }
   }
 
-  @Get(':id')
+  @Get('user-detail/:id')
   @ApiBearerAuth()
   @Roles(ConstantRoles.SUPER_USER)
   @ApiBadRequestResponse({ type: ApiException })
@@ -135,14 +135,6 @@ export class UserController {
         },
         { password: 0 },
       );
-      if (!result) {
-        throw new HttpException(
-          await i18n.translate(`common.not_found`, {
-            args: { fieldName: 'user' },
-          }),
-          HttpStatus.BAD_REQUEST,
-        );
-      }
       return new ApiResponse(result);
     } catch (error) {
       throw new HttpException(
@@ -275,9 +267,9 @@ export class UserController {
         username: username?.trim(),
         email: email?.trim(),
         isActive,
-        firstname: firstName,
-        fullname: fullName,
-        lastname: lastName,
+        firstName: firstName,
+        fullName: fullName,
+        lastName: lastName,
         role: roleKey,
         password: password && (await passwordGenerate(password)),
       };

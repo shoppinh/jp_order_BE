@@ -154,8 +154,8 @@ export class AuthService {
         username: user.username,
         email: user.email,
         role: user.role,
-        firstname: user.firstname,
-        lastname: user.lastname,
+        firstName: user.firstName,
+        lastName: user.lastName,
         accessToken: tokenData.accessToken,
         refreshToken: tokenData.refreshToken,
         tokenType: tokenData.tokenType,
@@ -164,7 +164,7 @@ export class AuthService {
         isRemember,
         isActive: user.isActive,
         lastLoggedIn: lastLoggedInDate,
-        fullname: user.fullname,
+        fullName: user.fullName,
         avatar: user.avatar,
       };
     } catch (e) {

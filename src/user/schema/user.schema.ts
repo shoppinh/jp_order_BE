@@ -40,12 +40,12 @@ export class User extends BaseSchema {
   username: string;
 
   @Prop({ required: false })
-  firstname: string;
+  firstName: string;
 
   @Prop({ required: false })
-  lastname: string;
+  lastName: string;
   @Prop({ required: false })
-  fullname: string;
+  fullName: string;
 
   @Prop({ required: false })
   lastLoggedIn?: Date;
