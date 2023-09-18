@@ -18,6 +18,7 @@ import { TransactionModule } from './transaction/transaction.module';
 import { SettingModule } from './setting/setting.module';
 import { AuditModule } from './audit/audit.module';
 import { MailsModule } from './mails/mails.module';
+import { StatisticModule } from './statistic/statistic.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { MailsModule } from './mails/mails.module';
     SettingModule,
     AuditModule,
     MailsModule,
+    StatisticModule,
   ],
   controllers: [AppController],
   providers: [
