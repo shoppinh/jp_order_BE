@@ -17,6 +17,8 @@ import {
 import { IHelperJwtOptions } from 'src/shared/utils/interface';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { AddUserDto } from 'src/user/dto/add-user.dto';
+import { AddressService } from 'src/user/service/address.service';
+import { Types } from 'mongoose';
 
 @Injectable()
 export class AuthService {
@@ -24,6 +26,7 @@ export class AuthService {
     private readonly _userService: UserService,
     private readonly _userTokenService: UserTokenService,
     private readonly _jwtService: JwtService,
+    private readonly _addressService: AddressService,
   ) {}
   async login(dto: UsernameLoginDto, i18n: I18nContext) {
     try {
@@ -143,6 +146,10 @@ export class AuthService {
         });
       }
       const accessTokenDecode = this.jwtDecrypt(tokenData.accessToken);
+      const userDefaultAddress = await this._addressService.findOne({
+        isDefault: true,
+        userId: new Types.ObjectId(user._id),
+      });
       const lastLoggedInDate = new Date();
       await this._userService.update(user._id, {
         lastLoggedIn: lastLoggedInDate,
@@ -165,7 +172,11 @@ export class AuthService {
         isActive: user.isActive,
         lastLoggedIn: lastLoggedInDate,
         fullName: user.fullName,
+        dob: user.dob,
         avatar: user.avatar,
+        balance: user.balance,
+        conversionRate: user.conversionRate,
+        address: userDefaultAddress,
       };
     } catch (e) {
       console.log(

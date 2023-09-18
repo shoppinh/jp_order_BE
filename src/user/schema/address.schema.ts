@@ -27,6 +27,8 @@ export class Address extends BaseSchema {
   zip: string;
   @Prop({ type: Types.ObjectId, ref: User.name, required: true })
   userId: string;
+  @Prop({ required: true })
+  isDefault: boolean;
 }
 
 export const AddressSchema = SchemaFactory.createForClass(Address);

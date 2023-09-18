@@ -1,5 +1,5 @@
 import { ApiModelProperty } from '@nestjs/swagger/dist/decorators/api-model-property.decorator';
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
 export class AddNewAddressDto {
   @ApiModelProperty({ required: true })
@@ -41,4 +41,9 @@ export class AddNewAddressDto {
   @IsString()
   @IsNotEmpty()
   zip: string;
+
+  @ApiModelProperty({ required: true })
+  @IsBoolean()
+  @IsNotEmpty()
+  isDefault: boolean;
 }

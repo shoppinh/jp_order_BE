@@ -95,6 +95,7 @@ export class UserService extends BaseService<User> {
       isActive,
       roleKey,
       password,
+      dob,
     } = userDto;
     await validateFields(
       { mobilePhone, email, username, roleKey, password },
@@ -161,6 +162,7 @@ export class UserService extends BaseService<User> {
       avatar,
       role: roleKey,
       password: hashPassword,
+      dob: new Date(dob),
     };
 
     return await this.model.create(userInstance);

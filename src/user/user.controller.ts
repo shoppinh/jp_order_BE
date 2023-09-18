@@ -191,6 +191,7 @@ export class UserController {
         isActive,
         roleKey,
         password,
+        dob,
       } = userDto;
       await validateFields({ id }, `common.required_field`, i18n);
 
@@ -270,6 +271,7 @@ export class UserController {
         firstName: firstName,
         fullName: fullName,
         lastName: lastName,
+        dob: new Date(dob),
         role: roleKey,
         password: password && (await passwordGenerate(password)),
       };
@@ -421,6 +423,7 @@ export class UserController {
         ward,
         wardId,
         zip,
+        isDefault,
       } = addAddressDto;
 
       const addressInstance: any = {
@@ -434,6 +437,7 @@ export class UserController {
         wardId: wardId,
         zip: zip?.trim(),
         userId: user._id,
+        isDefault,
       };
       const result = await this._addressService.create(addressInstance);
       return new ApiResponse(result);

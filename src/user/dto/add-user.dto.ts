@@ -36,6 +36,10 @@ export class AddUserDto extends BaseDto {
   @IsString()
   @IsOptional()
   fullName?: string;
+  @ApiModelProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  dob?: string;
 
   @ApiModelProperty({ required: true })
   @IsString()
