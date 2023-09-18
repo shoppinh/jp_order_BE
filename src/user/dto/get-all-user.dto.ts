@@ -11,4 +11,7 @@ export class GetAllUserDto extends PaginationDto {
   @IsString()
   @IsOptional()
   search: string;
+  @ApiModelPropertyOptional()
+  @IsOptional()
+  role: string;
 }

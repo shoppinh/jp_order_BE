@@ -39,6 +39,7 @@ export class UserService extends BaseService<User> {
     search: string,
     limit: number,
     skip: number,
+    role: string,
   ) {
     const aggregation = this.modelUser.aggregate().project({ password: 0 });
     const paginationStage = [];
@@ -70,6 +71,9 @@ export class UserService extends BaseService<User> {
 
     if (sort && !isEmptyObject(sort)) {
       aggregation.sort(sort).collation({ locale: 'en' });
+    }
+    if (role) {
+      aggregation.match({ role: role });
     }
     return aggregation
       .facet({

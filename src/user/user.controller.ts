@@ -66,13 +66,14 @@ export class UserController {
     @I18n() i18n: I18nContext,
   ) {
     try {
-      const { skip, limit, sort, search } = getAllUserDto;
+      const { skip, limit, sort, search, role } = getAllUserDto;
 
       const result = await this._userService.getUserList(
         sort,
         search,
         limit,
         skip,
+        role,
       );
       const [{ totalRecords, data }] = result;
       return new ApiResponse({
@@ -135,6 +136,104 @@ export class UserController {
         },
         { password: 0 },
       );
+      return new ApiResponse(result);
+    } catch (error) {
+      throw new HttpException(
+        error?.response ??
+          (await i18n.translate(`message.internal_server_error`)),
+        error?.status ?? HttpStatus.INTERNAL_SERVER_ERROR,
+        {
+          cause: error,
+        },
+      );
+    }
+  }
+
+  @Put('profile')
+  @ApiBearerAuth()
+  @ApiBadRequestResponse({ type: ApiException })
+  @HttpCode(HttpStatus.OK)
+  async updateProfile(
+    @Body() userDto: Partial<AddUserDto>,
+    @GetUser() user: User,
+    @I18n() i18n: I18nContext,
+  ) {
+    try {
+      const {
+        mobilePhone,
+        username,
+        email,
+        firstName,
+        lastName,
+        fullName,
+        isActive,
+        password,
+        dob,
+      } = userDto;
+
+      if (mobilePhone && !isPhoneNumberValidation(mobilePhone)) {
+        throw new HttpException(
+          await i18n.translate(`user.phone_invalid_field`),
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      if (email && !isValidEmail(email)) {
+        throw new HttpException(
+          await i18n.translate(`user.email_invalid_field`),
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      //Check Email
+      const userExistedEmail = await this._userService.findOne({ email });
+      if (
+        userExistedEmail &&
+        email !== userExistedEmail.email &&
+        userExistedEmail?._id
+      ) {
+        throw new HttpException(
+          await i18n.translate('message.existed_email'),
+          HttpStatus.CONFLICT,
+        );
+      }
+
+      // Check phone
+      const userExistedPhone = await this._userService.findOne({ mobilePhone });
+      if (
+        userExistedPhone &&
+        mobilePhone !== userExistedPhone.mobilePhone &&
+        userExistedPhone?._id
+      ) {
+        throw new HttpException(
+          await i18n.translate('message.existed_phone_number'),
+          HttpStatus.CONFLICT,
+        );
+      }
+      const existedProfile = await this._userService.findOne(
+        {
+          _id: new Types.ObjectId(user._id),
+        },
+        { password: 0 },
+      );
+      if (!existedProfile) {
+        throw new HttpException(
+          await i18n.translate(`common.not_found`, {
+            args: { fieldName: 'user' },
+          }),
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      const userInstance: any = {
+        mobilePhone: mobilePhone?.trim(),
+        username: username?.trim(),
+        email: email?.trim(),
+        isActive,
+        firstName: firstName,
+        fullName: fullName,
+        lastName: lastName,
+        dob: new Date(dob),
+        password: password && (await passwordGenerate(password)),
+      };
+      const result = await this._userService.update(user._id, userInstance);
       return new ApiResponse(result);
     } catch (error) {
       throw new HttpException(
@@ -258,7 +357,7 @@ export class UserController {
       if (!user) {
         throw new HttpException(
           await i18n.translate(`common.not_found`, {
-            args: { fieldName: 'id' },
+            args: { fieldName: 'user' },
           }),
           HttpStatus.BAD_REQUEST,
         );
