@@ -50,7 +50,7 @@ import { AddressService } from './service/address.service';
     UserTokenService,
     UserDeviceService,
     UserActiveService,
-      AddressService
+    AddressService,
   ],
   exports: [
     UserService,
@@ -58,7 +58,7 @@ import { AddressService } from './service/address.service';
     UserTokenService,
     UserDeviceService,
     UserActiveService,
-      AddressService
+    AddressService,
   ],
 })
 export class UserModule {}
