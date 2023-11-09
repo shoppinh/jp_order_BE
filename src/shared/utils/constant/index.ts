@@ -14,3 +14,6 @@ export const ConstantUser = {
   REVIEW_PHONE_NUMBER_OTP: '111111',
   ADMIN_PHONE_NUMBERS: ['0397273869'],
 };
+
+export const DEFAULT_DATE_FORMAT = 'yyyy-MM-dd';
+export const DEFAULT_TIMEZONE = 'Asia/Bangkok';

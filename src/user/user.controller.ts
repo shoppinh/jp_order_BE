@@ -166,8 +166,6 @@ export class UserController {
         firstName,
         lastName,
         fullName,
-        isActive,
-        password,
         dob,
       } = userDto;
 
@@ -226,12 +224,10 @@ export class UserController {
         mobilePhone: mobilePhone?.trim(),
         username: username?.trim(),
         email: email?.trim(),
-        isActive,
         firstName: firstName,
         fullName: fullName,
         lastName: lastName,
         dob: new Date(dob),
-        password: password && (await passwordGenerate(password)),
       };
       const result = await this._userService.update(user._id, userInstance);
       return new ApiResponse(result);
