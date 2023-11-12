@@ -22,6 +22,17 @@ export class ProductService extends BaseService<Product> {
     limit: number,
   ) {
     const aggregation = this.model.aggregate();
+    aggregation
+      .lookup({
+        from: 'categories',
+        localField: 'categoryId',
+        foreignField: '_id',
+        as: 'category',
+      })
+      .project({
+        categoryId: 0,
+        __v: 0,
+      });
     const paginationStage = [];
     if (search) {
       aggregation.match({

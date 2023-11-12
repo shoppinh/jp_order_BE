@@ -56,6 +56,10 @@ export class AddNewProductDto {
   })
   @IsNumber()
   price: number;
+  @ApiModelPropertyOptional()
+  @IsNumber()
+  @IsOptional()
+  salePrice: number;
 
   @ApiModelPropertyOptional()
   @IsString()

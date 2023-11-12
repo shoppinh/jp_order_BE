@@ -6,6 +6,10 @@ export class AddNewCategoryDto {
   @IsString()
   @IsNotEmpty()
   name: string;
+  @ApiModelProperty({ required: true })
+  @IsString()
+  @IsNotEmpty()
+  label: string;
 
   @ApiModelProperty({ required: false })
   @IsString()

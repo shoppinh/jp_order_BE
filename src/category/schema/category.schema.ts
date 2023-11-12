@@ -10,6 +10,10 @@ export class Category extends BaseSchema {
     required: true,
   })
   name: string;
+  @Prop({
+    required: true,
+  })
+  label: string;
 
   @Prop()
   description: string;

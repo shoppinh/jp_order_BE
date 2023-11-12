@@ -172,6 +172,7 @@ export class ProductController {
         description,
         quantity,
         productSrcURL,
+        salePrice,
       } = dto;
 
       const existedCategory = await this._categoryService.findById(categoryId);
@@ -197,6 +198,7 @@ export class ProductController {
         description,
         quantity,
         productSrcURL,
+        salePrice,
       };
       const result = await this._productService.update(id, productInstance);
       return new ApiResponse(result);

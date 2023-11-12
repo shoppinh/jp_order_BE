@@ -21,6 +21,11 @@ export class Product extends BaseSchema {
     required: true,
   })
   price: number;
+  @Prop({
+    required: false,
+    default: 0,
+  })
+  salePrice: number;
 
   @Prop({
     required: false,

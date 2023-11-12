@@ -65,10 +65,11 @@ export class CategoryService extends BaseService<Category> {
     i18n: I18nContext,
   ) {
     try {
-      const { name, description } = addNewCategoryDto;
+      const { name, description, label } = addNewCategoryDto;
       const categoryInstance = {
         name,
         description,
+        label,
       };
       await validateFields({ name }, `common.required_field`, i18n);
       return await this.model.create(categoryInstance);
