@@ -21,9 +21,11 @@ export class AddNewProductDto {
   @ApiModelProperty({
     required: true,
   })
-  @IsString()
-  @IsNotEmpty()
-  categoryId: string;
+  @IsArray({
+    always: false,
+  })
+  @IsString({ each: true })
+  category: string[];
 
   @ApiModelPropertyOptional()
   @IsString()

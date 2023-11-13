@@ -25,7 +25,7 @@ export class ProductService extends BaseService<Product> {
     aggregation
       .lookup({
         from: 'categories',
-        localField: 'categoryId',
+        localField: 'category',
         foreignField: '_id',
         as: 'category',
       })

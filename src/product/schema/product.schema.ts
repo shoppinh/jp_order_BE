@@ -11,11 +11,11 @@ export class Product extends BaseSchema {
   name: string;
 
   @Prop({
-    type: Types.ObjectId,
+    type: [Types.ObjectId],
     ref: Category.name,
     required: true,
   })
-  categoryId: string;
+  category: string[];
 
   @Prop({
     required: true,

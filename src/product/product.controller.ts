@@ -29,6 +29,7 @@ import { ConstantRoles } from 'src/shared/utils/constant/role';
 import { Roles } from 'src/shared/decorator/roles.decorator';
 import { AddNewProductDto } from './dto/add-new-product.dto';
 import { CategoryService } from 'src/category/category.service';
+import { Types } from 'mongoose';
 @Controller('api/product')
 @ApiTags('Product')
 @ApiHeader({ name: 'locale', description: 'en' })
@@ -85,17 +86,23 @@ export class ProductController {
     try {
       const {
         name,
-        categoryId,
+        category,
         price,
         imageAttachments,
         description,
         quantity,
+        salePrice,
+        SKU,
+        productSrcURL,
       } = dto;
 
-      await validateFields({ name, categoryId }, `common.required_field`, i18n);
+      await validateFields({ name }, `common.required_field`, i18n);
 
-      const existedCategory = await this._categoryService.findById(categoryId);
-      if (!existedCategory?._id) {
+      const existedCategory = await this._categoryService.findAll({
+        _id: { $in: category },
+      });
+
+      if (existedCategory.length !== category.length) {
         throw new HttpException(
           await i18n.translate(`message.category_not_found`),
           HttpStatus.BAD_REQUEST,
@@ -103,16 +110,22 @@ export class ProductController {
       }
       const productInstance = {
         name,
-        categoryId,
+        category: category.map((item) => new Types.ObjectId(item)),
         price,
         imageAttachments,
         description,
-        SKU: generateSKU(name, existedCategory?.name),
+        SKU: SKU || generateSKU(name, existedCategory?.[0]?.name || 'DEFAULT'),
         quantity,
+        salePrice,
+        productSrcURL,
       };
       const result = await this._productService.create(productInstance);
       return new ApiResponse(result);
     } catch (error) {
+      console.log(
+        '🚀 ~ file: product.controller.ts:124 ~ ProductController ~ error:',
+        error,
+      );
       throw new HttpException(
         error?.response ??
           (await i18n.translate(`message.internal_server_error`)),
@@ -166,22 +179,27 @@ export class ProductController {
       await validateFields({ id }, `common.required_field`, i18n);
       const {
         name,
-        categoryId,
+        category,
         price,
         imageAttachments,
         description,
         quantity,
         productSrcURL,
         salePrice,
+        SKU,
       } = dto;
 
-      const existedCategory = await this._categoryService.findById(categoryId);
-      if (!existedCategory?._id) {
+      const existedCategory = await this._categoryService.findAll({
+        _id: { $in: category },
+      });
+
+      if (existedCategory.length !== category.length) {
         throw new HttpException(
           await i18n.translate(`message.category_not_found`),
           HttpStatus.BAD_REQUEST,
         );
       }
+
       const existedProduct = await this._productService.findById(id);
       if (!existedProduct?._id) {
         throw new HttpException(
@@ -191,8 +209,16 @@ export class ProductController {
       }
       const productInstance = {
         name,
-        SKU: generateSKU(name || existedProduct?.name, existedCategory?.name),
-        categoryId,
+        SKU:
+          SKU ||
+          generateSKU(
+            name || existedProduct?.name,
+            existedCategory?.[0]?.name || 'DEFAULT',
+          ),
+        category:
+          category.length > 0
+            ? category.map((item) => new Types.ObjectId(item))
+            : existedProduct?.category,
         price,
         imageAttachments,
         description,
@@ -200,7 +226,11 @@ export class ProductController {
         productSrcURL,
         salePrice,
       };
-      const result = await this._productService.update(id, productInstance);
+      const result = await this._productService.update(
+        id,
+        productInstance,
+        'category',
+      );
       return new ApiResponse(result);
     } catch (error) {
       throw new HttpException(
