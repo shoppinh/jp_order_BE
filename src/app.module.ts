@@ -19,6 +19,8 @@ import { SettingModule } from './setting/setting.module';
 import { AuditModule } from './audit/audit.module';
 import { MailsModule } from './mails/mails.module';
 import { StatisticModule } from './statistic/statistic.module';
+import { FilesModule } from './files/files.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
 
 @Module({
   imports: [
@@ -39,6 +41,9 @@ import { StatisticModule } from './statistic/statistic.module';
       },
       resolvers: [new HeaderResolver(['locale'])],
     }),
+    ServeStaticModule.forRoot({
+      rootPath: path.join(__dirname, '..', 'public'),
+    }),
     AuthModule,
     UserModule,
     AdminModule,
@@ -50,6 +55,7 @@ import { StatisticModule } from './statistic/statistic.module';
     AuditModule,
     MailsModule,
     StatisticModule,
+    FilesModule,
   ],
   controllers: [AppController],
   providers: [

@@ -10,9 +10,6 @@ export class BaseSchema {
   @Prop({ required: false })
   updatedAt?: Date;
 
-  @Prop({ nullable: false })
-  createdBy: string;
-
   @Prop({ nullable: true })
   updatedBy: string;
 }
