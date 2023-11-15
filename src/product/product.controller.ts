@@ -244,7 +244,7 @@ export class ProductController {
     }
   }
 
-  @Delete(':id')
+  @Delete('/delete/:id')
   @ApiBearerAuth()
   @UseGuards(JwtGuard, RolesGuard)
   @Roles(ConstantRoles.SUPER_USER)
@@ -261,6 +261,47 @@ export class ProductController {
         );
       }
       await this._productService.delete(id);
+      return new ApiResponse({ status: true });
+    } catch (error) {
+      console.log(
+        '🚀 ~ file: product.controller.ts:266 ~ ProductController ~ deleteProduct ~ error:',
+        error,
+      );
+      throw new HttpException(
+        error?.response ??
+          (await i18n.translate(`message.internal_server_error`)),
+        error?.status ?? HttpStatus.INTERNAL_SERVER_ERROR,
+        {
+          cause: error,
+        },
+      );
+    }
+  }
+
+  @Delete('delete-list')
+  @ApiBearerAuth()
+  @UseGuards(JwtGuard, RolesGuard)
+  @Roles(ConstantRoles.SUPER_USER)
+  @ApiBadRequestResponse({ type: ApiException })
+  @HttpCode(HttpStatus.OK)
+  async deleteProductList(
+    @Body() dto: { productIds: string[] },
+    @I18n() i18n: I18nContext,
+  ) {
+    try {
+      const { productIds } = dto;
+      const existedProduct = await this._productService.findAll({
+        _id: { $in: productIds.map((id) => new Types.ObjectId(id)) },
+      });
+      if (existedProduct.length !== productIds.length) {
+        throw new HttpException(
+          await i18n.translate(`message.product_not_found`),
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      await this._productService.deleteByCondition({
+        _id: { $in: productIds.map((id) => new Types.ObjectId(id)) },
+      });
       return new ApiResponse({ status: true });
     } catch (error) {
       throw new HttpException(
