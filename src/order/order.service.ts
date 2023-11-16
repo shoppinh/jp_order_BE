@@ -5,6 +5,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { OrderSortOrder } from './dto/get-all-order.dto';
 import { isEmptyObject } from 'src/shared/utils';
+import { normalizeQueryHelper } from 'src/shared/helpers/normalize-query.helpler';
 
 @Injectable()
 export class OrderService extends BaseService<Order> {
@@ -34,10 +35,11 @@ export class OrderService extends BaseService<Order> {
       });
     }
     if (search) {
+      const normalizedQuery = normalizeQueryHelper(search);
       aggregation.match({
         $or: [
           {
-            name: { $eq: search },
+            name: new RegExp(normalizedQuery, 'i'),
           },
         ],
       });

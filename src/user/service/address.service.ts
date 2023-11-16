@@ -4,6 +4,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { AddressSortOrder } from '../dto/get-all-address.dto';
 import { isEmptyObject } from 'src/shared/utils';
+import { normalizeQueryHelper } from 'src/shared/helpers/normalize-query.helpler';
 
 export class AddressService extends BaseService<Address> {
   constructor(
@@ -42,16 +43,17 @@ export class AddressService extends BaseService<Address> {
       });
     }
     if (search) {
+      const normalizedQuery = normalizeQueryHelper(search);
       aggregation.match({
         $or: [
           {
-            username: { $eq: search },
+            username: new RegExp(normalizedQuery, 'i'),
           },
           {
-            mobilePhone: { $eq: search },
+            mobilePhone: new RegExp(normalizedQuery, 'i'),
           },
           {
-            email: { $eq: search },
+            email: new RegExp(normalizedQuery, 'i'),
           },
         ],
       });
