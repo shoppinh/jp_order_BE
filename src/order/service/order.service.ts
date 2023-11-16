@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { BaseService } from 'src/shared/service/base.service';
-import { Order, OrderDocument } from './schema/order.schema';
+import { Order, OrderDocument } from '../schema/order.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { OrderSortOrder } from './dto/get-all-order.dto';
+import { OrderSortOrder } from '../dto/get-all-order.dto';
 import { isEmptyObject } from 'src/shared/utils';
 
 @Injectable()
@@ -22,7 +22,34 @@ export class OrderService extends BaseService<Order> {
     limit: number,
     userId?: string,
   ) {
-    const aggregation = this.model.aggregate();
+    const aggregation = this.model
+      .aggregate()
+      .lookup({
+        from: 'addresses',
+        localField: 'addressId',
+        foreignField: '_id',
+        as: 'address',
+      })
+      .unwind({
+        path: '$address',
+        preserveNullAndEmptyArrays: true,
+      })
+      .lookup({
+        from: 'users',
+        localField: 'userId',
+        foreignField: '_id',
+        as: 'user',
+      })
+      .unwind({
+        path: '$user',
+        preserveNullAndEmptyArrays: true,
+      })
+      .lookup({
+        from: 'orderproducts',
+        localField: 'items',
+        foreignField: 'productId',
+        as: 'items',
+      });
     const paginationStage = [];
     if (userId) {
       aggregation.match({
@@ -56,6 +83,12 @@ export class OrderService extends BaseService<Order> {
     if (sort && !isEmptyObject(sort)) {
       aggregation.sort(sort).collation({ locale: 'en' });
     }
+
+    aggregation.project({
+      addressId: 0,
+      userId: 0,
+      __v: 0,
+    });
     return aggregation
       .facet({
         totalRecords: [

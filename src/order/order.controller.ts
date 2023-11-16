@@ -17,7 +17,7 @@ import {
   ApiHeader,
   ApiTags,
 } from '@nestjs/swagger';
-import { OrderService } from './order.service';
+import { OrderService } from './service/order.service';
 import { RolesGuard } from 'src/auth/guard/role.guard';
 import { JwtGuard } from 'src/auth/guard/jwt-auth.guard';
 import { Roles } from 'src/shared/decorator/roles.decorator';
@@ -32,6 +32,8 @@ import { User } from 'src/user/schema/user.schema';
 import { Types } from 'mongoose';
 import { AddNewOrderDto } from './dto/add-new-order.dto';
 import { AddressService } from 'src/user/service/address.service';
+import { OrderProductService } from './service/order-product.service';
+import { ProductService } from 'src/product/service/product.service';
 
 @Controller('api/order')
 @ApiTags('Order')
@@ -40,13 +42,20 @@ import { AddressService } from 'src/user/service/address.service';
 export class OrderController {
   constructor(
     private readonly _orderService: OrderService,
+    private readonly _orderProductService: OrderProductService,
+    private readonly _productService: ProductService,
     private readonly _addressService: AddressService,
   ) {}
 
   @Post('list')
   @ApiBearerAuth()
   @UseGuards(JwtGuard, RolesGuard)
-  @Roles(ConstantRoles.SUPER_USER)
+  @Roles(
+    ConstantRoles.SUPER_USER,
+    ConstantRoles.ACCOUNTANT,
+    ConstantRoles.STORAGE_MANAGER,
+    ConstantRoles.CUSTOMER,
+  )
   @ApiBadRequestResponse({ type: ApiException })
   @HttpCode(HttpStatus.OK)
   async getAllOrder(
@@ -61,7 +70,7 @@ export class OrderController {
         search,
         skip,
         limit,
-        user?.role === ConstantRoles.SUPER_USER ? undefined : user._id,
+        user?.role !== ConstantRoles.CUSTOMER ? undefined : user._id,
       );
       const [{ totalRecords, data }] = result;
       return new ApiResponse({
@@ -82,6 +91,11 @@ export class OrderController {
   @Get(':id')
   @UseGuards(JwtGuard)
   @ApiBearerAuth()
+  @Roles(
+    ConstantRoles.SUPER_USER,
+    ConstantRoles.ACCOUNTANT,
+    ConstantRoles.STORAGE_MANAGER,
+  )
   @ApiBadRequestResponse({ type: ApiException })
   @HttpCode(HttpStatus.OK)
   async getOrderDetails(
@@ -119,6 +133,7 @@ export class OrderController {
   @Post('')
   @UseGuards(JwtGuard)
   @ApiBearerAuth()
+  @Roles(ConstantRoles.SUPER_USER, ConstantRoles.ACCOUNTANT)
   @ApiBadRequestResponse({ type: ApiException })
   @HttpCode(HttpStatus.OK)
   async addNewOrder(
@@ -129,6 +144,7 @@ export class OrderController {
     try {
       const { addressId, items, status, totalPrice, totalWeight } = dto;
       await validateFields({ addressId }, 'common.required_field', i18n);
+      // Address existence check
       const existedAddress = await this._addressService.findById(addressId);
       if (!existedAddress) {
         throw new HttpException(
@@ -136,15 +152,47 @@ export class OrderController {
           HttpStatus.BAD_REQUEST,
         );
       }
+      // Product existence check
+      const productIds = items.map(
+        (item) => new Types.ObjectId(item.productId),
+      );
+      const existedProducts = await this._productService.findAll({
+        _id: { $in: productIds },
+      });
+      if (existedProducts.length !== productIds.length) {
+        throw new HttpException(
+          await i18n.translate(`product.product_not_found`),
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      // Check total price
+      const calculatedTotalPrice = items.reduce((acc, cur) => {
+        return acc + cur.taxTotal;
+      }, 0);
+      if (calculatedTotalPrice !== totalPrice) {
+        throw new HttpException(
+          await i18n.translate(`order.total_price_not_match`),
+          HttpStatus.BAD_REQUEST,
+        );
+      }
       const orderInstance = {
         addressId: new Types.ObjectId(addressId),
-        items,
+        items: productIds,
         status,
         totalPrice,
         totalWeight,
         userId: new Types.ObjectId(user._id),
       };
       const result = await this._orderService.create(orderInstance);
+
+      // Create order products
+      const orderProducts = items.map((item) => ({
+        ...item,
+        orderId: new Types.ObjectId(result._id),
+        productId: new Types.ObjectId(item.productId),
+      }));
+      await this._orderProductService.createMany(orderProducts);
       return new ApiResponse(result);
     } catch (error) {
       throw new HttpException(
@@ -160,7 +208,11 @@ export class OrderController {
 
   @Put(':id')
   @UseGuards(JwtGuard, RolesGuard)
-  @Roles(ConstantRoles.SUPER_USER)
+  @Roles(
+    ConstantRoles.SUPER_USER,
+    ConstantRoles.ACCOUNTANT,
+    ConstantRoles.STORAGE_MANAGER,
+  )
   @ApiBearerAuth()
   @ApiBadRequestResponse({ type: ApiException })
   @HttpCode(HttpStatus.OK)
@@ -172,7 +224,8 @@ export class OrderController {
   ) {
     try {
       await validateFields({ id }, 'common.required_field', i18n);
-      const { addressId, items, status, totalPrice, totalWeight } = dto;
+      // Only update address and status
+      const { addressId, status } = dto;
       if (addressId) {
         const existedAddress = await this._addressService.findById(addressId);
         if (!existedAddress) {
@@ -183,6 +236,7 @@ export class OrderController {
         }
       }
 
+      // Order existence check
       const existedOrder = await this._orderService.findOne({
         _id: new Types.ObjectId(id),
         ...(user.role !== ConstantRoles.SUPER_USER && {
@@ -197,10 +251,7 @@ export class OrderController {
       }
       const orderInstance = {
         ...(addressId && { addressId: new Types.ObjectId(addressId) }),
-        items,
         status,
-        totalPrice,
-        totalWeight,
       };
       const result = await this._orderService.update(id, orderInstance);
       return new ApiResponse(result);
@@ -218,6 +269,7 @@ export class OrderController {
 
   @Delete(':id')
   @UseGuards(JwtGuard)
+  @Roles(ConstantRoles.SUPER_USER, ConstantRoles.ACCOUNTANT)
   @ApiBearerAuth()
   @ApiBadRequestResponse({ type: ApiException })
   @HttpCode(HttpStatus.OK)

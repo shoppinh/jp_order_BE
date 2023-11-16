@@ -1,9 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import {
-  OrderProduct,
-  OrderProductSchema,
-} from 'src/product/schema/order-product.schema';
+import { OrderProduct } from 'src/order/schema/order-product.schema';
 import { BaseSchema } from 'src/shared/schema/base.schema';
 import { ORDER_STATUS } from 'src/shared/utils/constant/order';
 import { Address } from 'src/user/schema/address.schema';
@@ -13,8 +10,8 @@ export type OrderDocument = Document & Order;
 
 @Schema()
 export class Order extends BaseSchema {
-  @Prop({ required: true, type: [OrderProductSchema] })
-  items: OrderProduct[];
+  @Prop({ required: true, ref: OrderProduct.name, type: [Types.ObjectId] })
+  items: string[];
 
   @Prop({
     required: true,

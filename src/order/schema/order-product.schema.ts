@@ -1,7 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 import { BaseSchema } from 'src/shared/schema/base.schema';
-import { Product } from './product.schema';
+import { Product } from '../../product/schema/product.schema';
+import { Order } from './order.schema';
 
 export type OrderProductDocument = Document & OrderProduct;
 
@@ -13,6 +14,13 @@ export class OrderProduct extends BaseSchema {
     required: true,
   })
   productId: string;
+
+  @Prop({
+    type: Types.ObjectId,
+    // ref: Order.name,
+    required: true,
+  })
+  orderId: string;
 
   @Prop({
     required: true,

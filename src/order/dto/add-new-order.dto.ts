@@ -1,6 +1,6 @@
 import { ApiModelProperty } from '@nestjs/swagger/dist/decorators/api-model-property.decorator';
 import { IsArray, IsObject } from 'class-validator';
-import { OrderProduct } from 'src/product/schema/order-product.schema';
+import { OrderProduct } from 'src/order/schema/order-product.schema';
 import { ORDER_STATUS } from 'src/shared/utils/constant/order';
 
 export class AddNewOrderDto {
