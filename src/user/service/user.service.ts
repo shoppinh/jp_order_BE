@@ -22,6 +22,7 @@ import { UserActiveService } from './user-active.service';
 import { OtpLoginDto } from '../dto/otp-login.dto';
 import { ConstantUser } from '../../shared/utils/constant';
 import { UserActives } from '../schema/user-active.schema';
+import { normalizeQueryHelper } from 'src/shared/helpers/normalize-query.helpler';
 
 @Injectable()
 export class UserService extends BaseService<User> {
@@ -44,16 +45,17 @@ export class UserService extends BaseService<User> {
     const aggregation = this.modelUser.aggregate().project({ password: 0 });
     const paginationStage = [];
     if (search) {
+      const normalizedQuery = normalizeQueryHelper(search);
       aggregation.match({
         $or: [
           {
-            username: { $eq: search },
+            username: new RegExp(normalizedQuery, 'i'),
           },
           {
-            mobilePhone: { $eq: search },
+            mobilePhone: new RegExp(normalizedQuery, 'i'),
           },
           {
-            email: { $eq: search },
+            email: new RegExp(normalizedQuery, 'i'),
           },
         ],
       });

@@ -5,6 +5,7 @@ import { BaseService } from 'src/shared/service/base.service';
 import { isEmptyObject } from 'src/shared/utils';
 import { ProductSortOrder } from '../dto/get-all-product.dto';
 import { Product, ProductDocument } from '../schema/product.schema';
+import { normalizeQueryHelper } from 'src/shared/helpers/normalize-query.helpler';
 
 @Injectable()
 export class ProductService extends BaseService<Product> {
@@ -35,13 +36,14 @@ export class ProductService extends BaseService<Product> {
       });
     const paginationStage = [];
     if (search) {
+      const normalizedQuery = normalizeQueryHelper(search);
       aggregation.match({
         $or: [
           {
-            name: { $eq: search },
+            name: new RegExp(normalizedQuery, 'i'),
           },
           {
-            SKU: { $eq: search },
+            SKU: new RegExp(normalizedQuery, 'i'),
           },
         ],
       });

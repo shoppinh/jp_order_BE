@@ -7,6 +7,7 @@ import { CategorySortOrder } from './dto/get-all-category.dto';
 import { isEmptyObject, validateFields } from 'src/shared/utils';
 import { AddNewCategoryDto } from './dto/add-new-category.dto';
 import { I18nContext } from 'nestjs-i18n';
+import { normalizeQueryHelper } from 'src/shared/helpers/normalize-query.helpler';
 
 @Injectable()
 export class CategoryService extends BaseService<Category> {
@@ -26,10 +27,11 @@ export class CategoryService extends BaseService<Category> {
     const aggregation = this.model.aggregate();
     const paginationStage = [];
     if (search) {
+      const normalizedQuery = normalizeQueryHelper(search);
       aggregation.match({
         $or: [
           {
-            name: { $eq: search },
+            name: new RegExp(normalizedQuery, 'i'),
           },
         ],
       });
