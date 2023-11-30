@@ -30,6 +30,7 @@ import { Roles } from 'src/shared/decorator/roles.decorator';
 import { AddNewProductDto } from './dto/add-new-product.dto';
 import { CategoryService } from 'src/category/category.service';
 import { Types } from 'mongoose';
+import { QueryProductDto } from './dto/query-product.dto';
 @Controller('api/product')
 @ApiTags('Product')
 @ApiHeader({ name: 'locale', description: 'en' })
@@ -93,6 +94,7 @@ export class ProductController {
         quantity,
         salePrice,
         SKU,
+        productImageURL,
         productSrcURL,
       } = dto;
 
@@ -117,6 +119,7 @@ export class ProductController {
         SKU: SKU || generateSKU(name, existedCategory?.[0]?.name || 'DEFAULT'),
         quantity,
         salePrice,
+        productImageURL,
         productSrcURL,
       };
       const result = await this._productService.create(productInstance);
@@ -135,6 +138,25 @@ export class ProductController {
         },
       );
     }
+  }
+
+  @Post('query')
+  @ApiBadRequestResponse({ type: ApiException })
+  @HttpCode(HttpStatus.OK)
+  async findProduct(@Body() dto: QueryProductDto, @I18n() i18n: I18nContext) {
+    const { productSrcURL } = dto;
+    await validateFields({ productSrcURL }, `common.required_field`, i18n);
+
+    const existedProduct = await this._productService.findOne({
+      productSrcURL,
+    });
+    if (!existedProduct?._id) {
+      throw new HttpException(
+        await i18n.translate(`message.product_not_found`),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    return new ApiResponse(existedProduct);
   }
 
   @Get(':id')
@@ -184,9 +206,10 @@ export class ProductController {
         imageAttachments,
         description,
         quantity,
-        productSrcURL,
+        productImageURL,
         salePrice,
         SKU,
+        productSrcURL,
       } = dto;
 
       const existedCategory = await this._categoryService.findAll({
@@ -223,8 +246,9 @@ export class ProductController {
         imageAttachments,
         description,
         quantity,
-        productSrcURL,
+        productImageURL,
         salePrice,
+        productSrcURL,
       };
       const result = await this._productService.update(
         id,

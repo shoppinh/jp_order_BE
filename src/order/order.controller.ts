@@ -130,10 +130,14 @@ export class OrderController {
     }
   }
 
-  @Post('')
+  @Post('customer/add-order')
   @UseGuards(JwtGuard)
   @ApiBearerAuth()
-  @Roles(ConstantRoles.SUPER_USER, ConstantRoles.ACCOUNTANT)
+  @Roles(
+    ConstantRoles.SUPER_USER,
+    ConstantRoles.ACCOUNTANT,
+    ConstantRoles.CUSTOMER,
+  )
   @ApiBadRequestResponse({ type: ApiException })
   @HttpCode(HttpStatus.OK)
   async addNewOrder(
@@ -142,7 +146,15 @@ export class OrderController {
     @GetUser() user: User,
   ) {
     try {
-      const { addressId, items, status, totalPrice, totalWeight } = dto;
+      const {
+        addressId,
+        items,
+        status,
+        totalPrice,
+        totalWeight,
+        fullName,
+        phone,
+      } = dto;
       await validateFields({ addressId }, 'common.required_field', i18n);
       // Address existence check
       const existedAddress = await this._addressService.findById(addressId);
@@ -182,7 +194,11 @@ export class OrderController {
         status,
         totalPrice,
         totalWeight,
-        userId: new Types.ObjectId(user._id),
+        fullName: fullName ?? user.fullName,
+        phone: phone ?? user.mobilePhone,
+        ...(user.role === ConstantRoles.CUSTOMER && {
+          userId: new Types.ObjectId(user._id),
+        }),
       };
       const result = await this._orderService.create(orderInstance);
 

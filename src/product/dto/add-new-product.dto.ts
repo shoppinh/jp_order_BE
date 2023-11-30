@@ -66,5 +66,10 @@ export class AddNewProductDto {
   @ApiModelPropertyOptional()
   @IsString()
   @IsOptional()
+  productImageURL?: string;
+
+  @ApiModelPropertyOptional()
+  @IsString()
+  @IsOptional()
   productSrcURL?: string;
 }

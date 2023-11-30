@@ -21,7 +21,7 @@ export class Order extends BaseSchema {
   @Prop({
     type: Types.ObjectId,
     ref: User.name,
-    required: true,
+    required: false,
   })
   userId: string;
 
@@ -34,6 +34,16 @@ export class Order extends BaseSchema {
 
   @Prop({
     required: true,
+  })
+  fullName: string;
+
+  @Prop({
+    required: true,
+  })
+  phone: string;
+
+  @Prop({
+    required: true,
     default: ORDER_STATUS.CONFIRMED,
   })
   status: string;
@@ -43,6 +53,11 @@ export class Order extends BaseSchema {
     default: 0,
   })
   totalWeight: number;
+
+  @Prop({
+    required: false,
+  })
+  note: string;
 }
 
 export const OrderSchema = SchemaFactory.createForClass(Order);

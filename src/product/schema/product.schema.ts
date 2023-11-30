@@ -52,6 +52,10 @@ export class Product extends BaseSchema {
   @Prop({
     required: false,
   })
+  productImageURL: string;
+  @Prop({
+    required: false,
+  })
   productSrcURL: string;
 }
 
