@@ -89,7 +89,7 @@ export class OrderController {
   }
 
   @Get(':id')
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard, RolesGuard)
   @ApiBearerAuth()
   @Roles(
     ConstantRoles.SUPER_USER,
@@ -130,8 +130,8 @@ export class OrderController {
     }
   }
 
-  @Post('customer/add-order')
-  @UseGuards(JwtGuard)
+  @Post('')
+  @UseGuards(JwtGuard, RolesGuard)
   @ApiBearerAuth()
   @Roles(
     ConstantRoles.SUPER_USER,
@@ -154,20 +154,25 @@ export class OrderController {
         totalWeight,
         fullName,
         phone,
+        guestAddress,
       } = dto;
-      await validateFields({ addressId }, 'common.required_field', i18n);
-      // Address existence check
-      const existedAddress = await this._addressService.findById(addressId);
-      if (!existedAddress) {
+      if (addressId) {
+        // Address existence check
+        const existedAddress = await this._addressService.findById(addressId);
+        if (!existedAddress) {
+          throw new HttpException(
+            await i18n.translate(`address.address_not_found`),
+            HttpStatus.BAD_REQUEST,
+          );
+        }
+      } else if (!guestAddress) {
         throw new HttpException(
-          await i18n.translate(`address.address_not_found`),
+          await i18n.translate(`address.address_required`),
           HttpStatus.BAD_REQUEST,
         );
       }
       // Product existence check
-      const productIds = items.map(
-        (item) => new Types.ObjectId(item.productId),
-      );
+      const productIds = items.map((item) => new Types.ObjectId(item._id));
       const existedProducts = await this._productService.findAll({
         _id: { $in: productIds },
       });
@@ -189,24 +194,33 @@ export class OrderController {
         );
       }
       const orderInstance = {
-        addressId: new Types.ObjectId(addressId),
+        ...(addressId
+          ? { addressId: new Types.ObjectId(addressId) }
+          : { guestAddress }),
         items: productIds,
         status,
         totalPrice,
         totalWeight,
-        fullName: fullName ?? user.fullName,
-        phone: phone ?? user.mobilePhone,
-        ...(user.role === ConstantRoles.CUSTOMER && {
-          userId: new Types.ObjectId(user._id),
-        }),
+        ...(user.role === ConstantRoles.CUSTOMER
+          ? {
+              userId: new Types.ObjectId(user._id),
+            }
+          : {
+              fullName: fullName ?? user.fullName,
+              phone: phone ?? user.mobilePhone,
+            }),
       };
       const result = await this._orderService.create(orderInstance);
 
       // Create order products
       const orderProducts = items.map((item) => ({
-        ...item,
         orderId: new Types.ObjectId(result._id),
-        productId: new Types.ObjectId(item.productId),
+        productId: new Types.ObjectId(item._id),
+        quantity: item.quantity,
+        price: item.price,
+        preTaxTotal: item.preTaxTotal,
+        tax: item.tax,
+        taxTotal: item.taxTotal,
       }));
       await this._orderProductService.createMany(orderProducts);
       return new ApiResponse(result);
@@ -284,7 +298,7 @@ export class OrderController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard, RolesGuard)
   @Roles(ConstantRoles.SUPER_USER, ConstantRoles.ACCOUNTANT)
   @ApiBearerAuth()
   @ApiBadRequestResponse({ type: ApiException })

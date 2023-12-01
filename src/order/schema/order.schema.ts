@@ -28,9 +28,14 @@ export class Order extends BaseSchema {
   @Prop({
     type: Types.ObjectId,
     ref: Address.name,
-    required: true,
+    required: false,
   })
   addressId: string;
+
+  @Prop({
+    required: false,
+  })
+  guestAddress: string;
 
   @Prop({
     required: true,

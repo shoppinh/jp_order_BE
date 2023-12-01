@@ -28,10 +28,14 @@ export class AddNewOrderDto {
   })
   totalWeight: number;
 
-  @ApiModelProperty({
-    required: true,
+  @ApiPropertyOptional({
+    required: false,
   })
   addressId: string;
+  @ApiPropertyOptional({
+    required: false,
+  })
+  guestAddress: string;
   @ApiPropertyOptional()
   userId: string;
   @ApiPropertyOptional()
